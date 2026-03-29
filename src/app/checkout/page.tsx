@@ -144,10 +144,10 @@ export default function CheckoutPage() {
             </Link>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">
-                กรอกข้อมูลเพื่อส่งคำขอลงทะเบียน
+                กรอกข้อมูลและชำระเงิน
               </h1>
               <p className="text-sm text-gray-500">
-                ทีมงานจะติดต่อกลับเพื่อยืนยันรายละเอียด
+                กรอกข้อมูลเพื่อลงทะเบียนและชำระเงินผ่าน QR Code
               </p>
             </div>
           </div>
@@ -309,10 +309,11 @@ export default function CheckoutPage() {
                       ขั้นตอนหลังจากส่งข้อมูล
                     </h3>
                     <ul className="text-sm text-gray-600 space-y-1">
-                      <li>1. ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</li>
-                      <li>2. ยืนยันรายละเอียดคอร์สและตารางเรียน</li>
-                      <li>3. แจ้งวิธีการชำระเงิน</li>
-                      <li>4. เริ่มเรียนได้เลยหลังชำระเงิน</li>
+                      <li>1. ชำระเงินผ่าน QR Code ด้านขวา</li>
+                      <li>2. ส่งหลักฐานการโอนเงินผ่านไลน์ @23arthome</li>
+                      <li>3. ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</li>
+                      <li>4. ยืนยันรายละเอียดคอร์สและตารางเรียน</li>
+                      <li>5. เริ่มเรียนได้เลยหลังยืนยันการชำระเงิน</li>
                     </ul>
                   </div>
                 </div>
@@ -326,8 +327,12 @@ export default function CheckoutPage() {
                       : 'bg-art-500 hover:bg-art-600 text-white shadow-lg hover:shadow-xl'
                   }`}
                 >
-                  {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอลงทะเบียน'}
+                  {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอลงทะเบียน + ชำระเงิน'}
                 </button>
+                
+                <p className="text-center text-sm text-gray-500 mt-3">
+                  💰 รวมค่าใช้จ่าย: <span className="font-semibold text-art-600">{formatPrice(cart.total_amount)}</span>
+                </p>
               </div>
             </form>
           </div>
@@ -376,6 +381,66 @@ export default function CheckoutPage() {
                 <p className="text-sm text-gray-500">
                   * ยังไม่รวมค่าใช้จ่ายอื่นๆ (ถ้ามี)
                 </p>
+              </div>
+              
+              {/* Payment QR Section */}
+              <div className="border-t pt-6 mt-6">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    🏦 ชำระเงินผ่าน QR Code
+                  </h4>
+                  
+                  <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-4">
+                    <div className="w-full h-80 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center mb-4 relative">
+                      <div className="text-center">
+                        <div className="text-white text-5xl mb-3">🏦</div>
+                        <h3 className="text-white font-bold text-lg mb-2">THAI QR PAYMENT</h3>
+                        <div className="text-white opacity-90">PromptPay</div>
+                      </div>
+                      
+                      {/* QR Code Placeholder */}
+                      <div className="absolute inset-4 bg-white rounded-md flex items-center justify-center">
+                        <div className="w-40 h-40 bg-black rounded-lg flex items-center justify-center">
+                          <div className="grid grid-cols-8 gap-1">
+                            {Array.from({ length: 64 }, (_, i) => (
+                              <div 
+                                key={i} 
+                                className={`w-2 h-2 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'} rounded-sm`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center space-y-2">
+                      <p className="text-green-600 font-semibold">
+                        📱 สแกน QR เพื่อโอนเงินชำระ
+                      </p>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>ชื่อ:</strong> นาย อนุรักษ์ สุนันทศักดิ์</p>
+                        <p><strong>บัญชี:</strong> xxx-x-x4521-x</p>
+                        <p className="text-gray-500">เลขที่อ้างอิง: 004999211760367</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-xs font-bold mr-2">
+                        K+
+                      </div>
+                      <span className="text-green-800 font-medium">
+                        รับเงินได้จากทุกธนาคาร | รับเงินได้จากทุกเครือข่าย
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 text-xs text-gray-500 space-y-1">
+                    <p>💡 หลังจากชำระเงินแล้ว กรุณาส่งหลักฐานการโอนเงิน</p>
+                    <p>พร้อมข้อมูลการสมัครผ่านไลน์ @23arthome</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
