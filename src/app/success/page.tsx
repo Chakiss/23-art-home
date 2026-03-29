@@ -177,7 +177,7 @@ function SuccessContent() {
                           )}
                           <p className="text-xs text-gray-500">
                             {item.item_type === 'custom_bundle' 
-                              ? `คอร์สจัดเอง 5 ครั้ง (${item.bundle_detail ? item.bundle_detail.selected_items.reduce((total, i) => total + (i.session_hours * i.quantity), 0) : 0} ชั่วโมง)`
+                              ? 'คอร์สจัดเอง 5 ครั้ง'
                               : item.item_type === 'predefined_course' 
                                 ? 'คอร์สสำเร็จรูป' 
                                 : 'อุปกรณ์เพิ่มเติม'

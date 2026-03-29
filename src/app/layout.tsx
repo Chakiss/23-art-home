@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Kanit } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -14,8 +14,6 @@ export const metadata: Metadata = {
   description: 'เลือกคอร์สศิลปะให้เหมาะกับน้องได้ง่ายๆ เลือกได้ทั้งแบบจัดคอร์สเอง หรือเลือกคอร์สสำเร็จรูป พร้อมอุปกรณ์ศิลปะครบชุด',
   keywords: 'คอร์สศิลปะ, ศิลปะเด็ก, เรียนวาดรูป, คอร์สเรียนศิลปะ, 23 Art Home',
   authors: [{ name: '23 Art Home' }],
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
-  themeColor: '#f0761f',
   openGraph: {
     title: '23 Art Home - คอร์สศิลปะสำหรับเด็ก',
     description: 'เลือกคอร์สศิลปะให้เหมาะกับน้องได้ง่ายๆ',
@@ -26,6 +24,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#f0761f',
 };
 
 export default function RootLayout({
