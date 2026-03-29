@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/useCart';
 import { OrderService } from '@/lib/orderService';
@@ -391,26 +392,15 @@ export default function CheckoutPage() {
                   </h4>
                   
                   <div className="bg-white p-4 rounded-lg border-2 border-gray-200 mb-4">
-                    <div className="w-full h-80 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center mb-4 relative">
-                      <div className="text-center">
-                        <div className="text-white text-5xl mb-3">🏦</div>
-                        <h3 className="text-white font-bold text-lg mb-2">THAI QR PAYMENT</h3>
-                        <div className="text-white opacity-90">PromptPay</div>
-                      </div>
-                      
-                      {/* QR Code Placeholder */}
-                      <div className="absolute inset-4 bg-white rounded-md flex items-center justify-center">
-                        <div className="w-40 h-40 bg-black rounded-lg flex items-center justify-center">
-                          <div className="grid grid-cols-8 gap-1">
-                            {Array.from({ length: 64 }, (_, i) => (
-                              <div 
-                                key={i} 
-                                className={`w-2 h-2 ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'} rounded-sm`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                    <div className="w-full max-w-sm mx-auto">
+                      <Image 
+                        src="/images/payment.jpg" 
+                        alt="Thai QR Payment - PromptPay"
+                        width={400}
+                        height={600}
+                        className="w-full h-auto rounded-lg shadow-sm"
+                        priority
+                      />
                     </div>
                     
                     <div className="text-center space-y-2">
