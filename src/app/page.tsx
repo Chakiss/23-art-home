@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect } from 'react';
 import { COURSE_CATEGORIES } from '@/types';
 import { useCart } from '@/hooks/useCart';
@@ -49,8 +50,19 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto max-w-4xl text-center">
+      <section className="relative py-16 px-4 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/arthome1.jpg"
+            alt="Art Studio Background"
+            fill
+            className="object-cover opacity-10"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-white/80"></div>
+        </div>
+        
+        <div className="relative z-10 container mx-auto max-w-4xl text-center">
           {/* Decorative Elements */}
           <div className="relative mb-8">
             <div className="absolute left-1/4 top-4 w-12 h-12 bg-blue-100 rounded-full opacity-60 animate-bounce-slow"></div>
@@ -58,13 +70,13 @@ export default function HomePage() {
             <div className="absolute left-1/3 bottom-4 w-6 h-6 bg-yellow-100 rounded-full opacity-50"></div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[0.85] tracking-tighter mb-6">
-              เลือกคอร์สศิลปะ
+              ออกแบบคอร์สศิลปะให้สนุก
               <br />
               <span className="bg-gradient-to-r from-art-500 to-art-600 bg-clip-text text-transparent drop-shadow-sm">
-                ให้เหมาะกับน้อง
+                มันส์ให้สุด
               </span>
               <br />
-              ได้ง่ายๆ
+              ทุกความฝัน
             </h1>
           </div>
           
@@ -75,20 +87,20 @@ export default function HomePage() {
           </p>
 
           {/* Age and Duration Info */}
-          <div className="inline-flex items-center space-x-8 bg-white rounded-2xl px-8 py-4 shadow-lg border border-gray-100 mb-16">
-            <div className="text-center">
-              <div className="text-2xl mb-1">👶</div>
-              <div className="text-sm font-medium text-gray-600">อายุ 4-12 ปี</div>
+          <div className="grid md:grid-cols-2 gap-4 max-w-lg mx-auto mb-16">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-gray-100">
+              <div className="text-center">
+                <div className="text-2xl mb-2">👶</div>
+                <div className="font-semibold text-gray-900">อายุ 4-6 ปี</div>
+                <div className="text-sm text-gray-600">ครั้งละ 1 ชม.</div>
+              </div>
             </div>
-            <div className="w-px h-8 bg-gray-200"></div>
-            <div className="text-center">
-              <div className="text-2xl mb-1">⏰</div>
-              <div className="text-sm font-medium text-gray-600">ครั้งละ 2 ชม.</div>
-            </div>
-            <div className="w-px h-8 bg-gray-200"></div>
-            <div className="text-center">
-              <div className="text-2xl mb-1">🎨</div>
-              <div className="text-sm font-medium text-gray-600">คุณภาพสูง</div>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-gray-100">
+              <div className="text-center">
+                <div className="text-2xl mb-2">🧒</div>
+                <div className="font-semibold text-gray-900">อายุ 6-12 ปี</div>
+                <div className="text-sm text-gray-600">ครั้งละ 2 ชม.</div>
+              </div>
             </div>
           </div>
         </div>

@@ -172,6 +172,13 @@ export default function AccessoriesPage() {
                           </div>
                         ))}
                       </div>
+                      
+                      {/* Note */}
+                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-sm text-yellow-800">
+                          <strong>หมายเหตุ:</strong> อุปกรณ์นี้เป็นเพียงอุปกรณ์พื้นฐาน จัดเตรียมไว้ใน1ชุด หากประสงค์ใช้อุปกรณ์อื่นๆ กรุณาจัดเตรียมมาเพิ่มเติมตามความเหมาะสม
+                        </p>
+                      </div>
                     </div>
                     
                     {/* Price and Actions */}

@@ -31,6 +31,7 @@ export class OrderService {
         parent_line_id: formData.parent_line_id?.trim(),
         student_name: formData.student_name.trim(),
         student_age: formData.student_age,
+        student_gender: formData.student_gender,
         note: formData.note?.trim(),
         items: cart.items,
         total_amount: cart.total_amount,

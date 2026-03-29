@@ -13,7 +13,10 @@ import {
   UserIcon,
   PhoneIcon,
   ExclamationCircleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  PhotoIcon,
+  CloudArrowUpIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 export default function CheckoutPage() {
@@ -26,26 +29,66 @@ export default function CheckoutPage() {
     parent_line_id: '',
     student_name: '',
     student_age: 6,
+    student_gender: 'หญิง',
     note: '',
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Slip upload states
+  const [slipFile, setSlipFile] = useState<File | null>(null);
+  const [slipPreview, setSlipPreview] = useState<string | null>(null);
+  const [isUploadingSlip, setIsUploadingSlip] = useState(false);
 
   // Redirect if cart is empty - only on client side
-  useEffect(() => {
-    if (cart.items.length === 0) {
-      router.push('/');
-    }
-  }, [cart.items.length, router]);
+  // useEffect(() => {
+  //   if (cart.items.length === 0) {
+  //     router.push('/');
+  //   }
+  // }, [cart.items.length, router]);
 
-  // Return loading state during SSR or if cart is empty
+  // Cleanup slip preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (slipPreview) {
+        URL.revokeObjectURL(slipPreview);
+      }
+    };
+  }, [slipPreview]);
+
+  // Return empty cart message if cart is empty (for testing purposes)
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-art-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
+      <div className="min-h-screen bg-gray-50">
+        <header className="sticky top-0 z-50 bg-white shadow-sm">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Link 
+                href="/"
+                className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <ArrowLeftIcon className="w-6 h-6" />
+              </Link>
+              <h1 className="text-xl font-semibold text-gray-900">ชำระเงิน</h1>
+            </div>
+          </div>
+        </header>
+        <div className="container mx-auto px-4 py-16 max-w-2xl text-center">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8">
+            <h2 className="text-xl font-semibold text-yellow-800 mb-4">
+              ตะกร้าสินค้าว่างเปล่า
+            </h2>
+            <p className="text-yellow-700 mb-6">
+              กรุณาเพิ่มคอร์สเข้าตะกร้าก่อนทำการชำระเงิน
+            </p>
+            <Link 
+              href="/custom-course"
+              className="btn-primary inline-block"
+            >
+              เลือกคอร์ส
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -76,6 +119,12 @@ export default function CheckoutPage() {
       newErrors.student_age = 'อายุนักเรียนต้องอยู่ระหว่าง 4-12 ปี';
     }
 
+    // Slip upload validation (optional but recommended)
+    // Remove this validation if you want to make slip upload optional
+    // if (!slipFile) {
+    //   newErrors.slip_upload = 'กรุณาอัพโหลดสลิปการโอนเงินเพื่อยืนยันการชำระ';
+    // }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -93,6 +142,53 @@ export default function CheckoutPage() {
         [field]: ''
       }));
     }
+  };
+  
+  const handleSlipUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('กรุณาอัพโหลดไฟล์รูปภาพเท่านั้น (JPG, PNG)');
+      return;
+    }
+    
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('ขนาดไฟล์ต้องไม่เกิน 5 MB');
+      return;
+    }
+    
+    setIsUploadingSlip(true);
+    
+    try {
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setSlipFile(file);
+      setSlipPreview(previewUrl);
+      
+      // Clear error if exists
+      if (errors.slip_upload) {
+        setErrors(prev => ({
+          ...prev,
+          slip_upload: ''
+        }));
+      }
+    } catch (error) {
+      console.error('Error uploading slip:', error);
+      alert('เกิดข้อผิดพลาดในการอัพโหลดไฟล์');
+    } finally {
+      setIsUploadingSlip(false);
+    }
+  };
+  
+  const removeSlip = () => {
+    if (slipPreview) {
+      URL.revokeObjectURL(slipPreview);
+    }
+    setSlipFile(null);
+    setSlipPreview(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -159,7 +255,7 @@ export default function CheckoutPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form id="checkout-form" onSubmit={handleSubmit} className="space-y-8">
               {/* Parent Information */}
               <div className="card">
                 <div className="flex items-center mb-6">
@@ -260,24 +356,38 @@ export default function CheckoutPage() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      อายุ (ปี) *
+                      เพศ *
                     </label>
                     <select
-                      value={formData.student_age}
-                      onChange={(e) => handleInputChange('student_age', parseInt(e.target.value))}
-                      className={`input-field ${errors.student_age ? 'border-red-300 focus:ring-red-500' : ''}`}
+                      value={formData.student_gender}
+                      onChange={(e) => handleInputChange('student_gender', e.target.value)}
+                      className="input-field"
                     >
-                      {Array.from({ length: 9 }, (_, i) => i + 4).map(age => (
-                        <option key={age} value={age}>{age} ปี</option>
-                      ))}
+                      <option value="หญิง">หญิง</option>
+                      <option value="ชาย">ชาย</option>
                     </select>
-                    {errors.student_age && (
-                      <p className="mt-1 text-sm text-red-600 flex items-center">
-                        <ExclamationCircleIcon className="w-4 h-4 mr-1" />
-                        {errors.student_age}
-                      </p>
-                    )}
                   </div>
+                </div>
+                
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    อายุ (ปี) *
+                  </label>
+                  <select
+                    value={formData.student_age}
+                    onChange={(e) => handleInputChange('student_age', parseInt(e.target.value))}
+                    className={`input-field ${errors.student_age ? 'border-red-300 focus:ring-red-500' : ''}`}
+                  >
+                    {Array.from({ length: 9 }, (_, i) => i + 4).map(age => (
+                      <option key={age} value={age}>{age} ปี</option>
+                    ))}
+                  </select>
+                  {errors.student_age && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <ExclamationCircleIcon className="w-4 h-4 mr-1" />
+                      {errors.student_age}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -301,39 +411,106 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <div className="card bg-gray-50">
-                <div className="flex items-start space-x-3 mb-6">
-                  <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">
-                      ขั้นตอนหลังจากส่งข้อมูล
-                    </h3>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      <li>1. ชำระเงินผ่าน QR Code ด้านขวา</li>
-                      <li>2. ส่งหลักฐานการโอนเงินผ่านไลน์ @23arthome</li>
-                      <li>3. ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</li>
-                      <li>4. ยืนยันรายละเอียดคอร์สและตารางเรียน</li>
-                      <li>5. เริ่มเรียนได้เลยหลังยืนยันการชำระเงิน</li>
-                    </ul>
-                  </div>
+              {/* Slip Upload */}
+              <div className="card">
+                <div className="flex items-center mb-6">
+                  <PhotoIcon className="w-6 h-6 text-art-500 mr-3" />
+                  <h2 className="text-xl font-bold text-gray-900">
+                    อัพโหลดสลิปการโอนเงิน
+                  </h2>
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all ${
-                    isSubmitting
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-art-500 hover:bg-art-600 text-white shadow-lg hover:shadow-xl'
-                  }`}
-                >
-                  {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอลงทะเบียน + ชำระเงิน'}
-                </button>
                 
-                <p className="text-center text-sm text-gray-500 mt-3">
-                  💰 รวมค่าใช้จ่าย: <span className="font-semibold text-art-600">{formatPrice(cart.total_amount)}</span>
-                </p>
+                {!slipFile ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-art-300 transition-colors">
+                    <label htmlFor="slip-upload" className="cursor-pointer block">
+                      <input
+                        type="file"
+                        id="slip-upload"
+                        accept="image/*"
+                        onChange={handleSlipUpload}
+                        className="hidden"
+                      />
+                      
+                      <div className="space-y-4">
+                        <div className="flex justify-center">
+                          <CloudArrowUpIcon className="w-12 h-12 text-gray-400" />
+                        </div>
+                        
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {isUploadingSlip ? 'กำลังอัพโหลด...' : 'คลิกเพื่ือเลือกไฟล์สลิป'}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-2">
+                            รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5 MB
+                          </p>
+                        </div>
+                        
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                          <h4 className="font-semibold text-blue-900 mb-2">💡 คำแนะนำการถ่ายรูปสลิป</h4>
+                          <ul className="text-sm text-blue-700 space-y-1">
+                            <li>• ถ่ายรูปให้ชัดเจน อ่านตัวหนังสือได้</li>
+                            <li>• รวมข้อมูลวันที่ เวลา และจำนวนเงิน</li>
+                            <li>• หลีกเลี่ยงแสงสะท้อนบนหน้าจอ</li>
+                            <li>• ตรวจสอบว่าจำนวนเงินตรงกับยอดสั่งซื้อ</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Preview */}
+                    <div className="relative bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="font-semibold text-gray-900">สลิปการโอนเงิน</p>
+                          <p className="text-sm text-gray-500">{slipFile.name}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeSlip}
+                          className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                          title="ลบสลิป"
+                        >
+                          <XMarkIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                      
+                      {slipPreview && (
+                        <div className="max-w-sm mx-auto">
+                          <Image
+                            src={slipPreview}
+                            alt="หลักฐานการโอนเงิน"
+                            width={300}
+                            height={400}
+                            className="w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Change File Button */}
+                    <div className="text-center">
+                      <label htmlFor="slip-upload-replace" className="btn-secondary inline-block cursor-pointer">
+                        <input
+                          type="file"
+                          id="slip-upload-replace"
+                          accept="image/*"
+                          onChange={handleSlipUpload}
+                          className="hidden"
+                        />
+                        เปลี่ยนไฟล์สลิป
+                      </label>
+                    </div>
+                  </div>
+                )}
+                
+                {errors.slip_upload && (
+                  <p className="mt-4 text-sm text-red-600 flex items-center">
+                    <ExclamationCircleIcon className="w-4 h-4 mr-1" />
+                    {errors.slip_upload}
+                  </p>
+                )}
               </div>
             </form>
           </div>
@@ -427,11 +604,71 @@ export default function CheckoutPage() {
                   </div>
                   
                   <div className="mt-4 text-xs text-gray-500 space-y-1">
-                    <p>💡 หลังจากชำระเงินแล้ว กรุณาส่งหลักฐานการโอนเงิน</p>
-                    <p>พร้อมข้อมูลการสมัครผ่านไลน์ @23arthome</p>
+                    <p>💡 หลังจากชำระเงินแล้ว กรุณาอัปโหลดสลิป</p>
+                    <p>การโอนเงินในแบบฟอร์มด้านซ้าย</p>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Process Steps - Bottom Section */}
+        <div className="mt-12 max-w-4xl mx-auto">
+          <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
+            <div className="flex items-start space-x-3 mb-6">
+              <CheckCircleIcon className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  🚀 ขั้นตอนหลังจากส่งข้อมูล
+                </h3>
+                <ul className="text-gray-700 space-y-2">
+                  <li className="flex items-center space-x-2">
+                    <span className="bg-art-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</span>
+                    <span>ชำระเงินผ่าน QR Code ด้านขวา</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="bg-art-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</span>
+                    <span>อัปโหลดสลิปการโอนเงินข้างบน</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="bg-art-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</span>
+                    <span>ส่งคำขอลงทะเบียนและรอการยืนยัน</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="bg-art-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</span>
+                    <span>ทีมงานจะติดต่อกลับภายใน 24 ชั่วโมง</span>
+                  </li>
+                  <li className="flex items-center space-x-2">
+                    <span className="bg-art-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">5</span>
+                    <span>เริ่มเรียนได้เลยหลังยืนยันการชำระเงิน</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="text-center p-4 bg-white rounded-lg border border-blue-200">
+              <p className="text-lg font-semibold text-gray-900 mb-4">
+                💰 รวมค่าใช้จ่าย: <span className="text-art-600">{formatPrice(cart.total_amount)}</span>
+              </p>
+              
+              {/* Submit Button */}
+              <button
+                type="submit"
+                form="checkout-form"
+                disabled={isSubmitting}
+                className={`w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all mb-3 ${
+                  isSubmitting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-art-500 hover:bg-art-600 text-white shadow-lg hover:shadow-xl'
+                }`}
+              >
+                {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอลงทะเบียนพร้อมสลิป'}
+              </button>
+              
+              <p className="text-sm text-gray-600">
+                ขอบคุณที่เลือก 23 Art Home เราจะดูแลน้องอย่างดีที่สุด! 🎨
+              </p>
             </div>
           </div>
         </div>

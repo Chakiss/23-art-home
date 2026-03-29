@@ -59,6 +59,7 @@ export interface Order {
   parent_line_id?: string;
   student_name: string;
   student_age: number;
+  student_gender: 'หญิง' | 'ชาย';
   note?: string;
   items: CartItem[];
   total_amount: number;
@@ -73,6 +74,7 @@ export interface CheckoutFormData {
   parent_line_id?: string;
   student_name: string;
   student_age: number;
+  student_gender: 'หญิง' | 'ชาย';
   note?: string;
 }
 

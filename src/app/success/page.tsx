@@ -3,14 +3,12 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { OrderService } from '@/lib/orderService';
 import { Order } from '@/types';
 import { formatPrice } from '@/lib/utils';
 import { 
   CheckCircleIcon, 
-  PhoneIcon, 
-  ClockIcon,
-  HomeIcon,
   DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 
@@ -83,213 +81,233 @@ function SuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Success Header */}
-        <div className="text-center mb-12">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
-            <CheckCircleIcon className="w-12 h-12 text-green-600" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            ส่งข้อมูลเรียบร้อยแล้ว! 🎉
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            ขอบคุณที่เลือก 23 Art Home 
-            <br />
-            ทางทีมงานจะติดต่อกลับเพื่อยืนยันรายละเอียดอีกครั้ง
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Order Details */}
-          <div className="space-y-6">
-            {/* Reference Number */}
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                หมายเลขอ้างอิง
-              </h2>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">เลขที่คำร้อง</p>
-                  <p className="text-2xl font-mono font-bold text-art-600">
-                    {order.reference_no}
-                  </p>
+    <div className="min-h-screen bg-gray-100 py-8">
+      <div className="container mx-auto px-4 max-w-3xl">
+        {/* Receipt Card */}
+        <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-art-500 to-orange-600 p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-white rounded-full p-2">
+                  <Image
+                    src="/images/arthome_logo.jpg" 
+                    alt="23 Art Home Logo"
+                    width={60}
+                    height={60}
+                    className="w-full h-full object-contain rounded-full"
+                  />
                 </div>
-                <button
-                  onClick={handleCopyReference}
-                  className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <DocumentDuplicateIcon className="w-4 h-4" />
-                  <span className="text-sm">
-                    {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
-                  </span>
-                </button>
+                <div>
+                  <h1 className="text-2xl font-bold">23arthome studio&tutor</h1>
+                </div>
               </div>
-            </div>
-
-            {/* Customer Info */}
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                ข้อมูลผู้ติดต่อ
-              </h2>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-gray-600">ผู้ปกครอง</p>
-                  <p className="font-semibold">{order.parent_name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">เบอร์โทร</p>
-                  <p className="font-semibold">{order.parent_phone}</p>
-                </div>
-                {order.parent_line_id && (
-                  <div>
-                    <p className="text-sm text-gray-600">LINE ID</p>
-                    <p className="font-semibold">{order.parent_line_id}</p>
-                  </div>
-                )}
-                <div>
-                  <p className="text-sm text-gray-600">นักเรียน</p>
-                  <p className="font-semibold">{order.student_name} (อายุ {order.student_age} ปี)</p>
-                </div>
-                {order.note && (
-                  <div>
-                    <p className="text-sm text-gray-600">หมายเหตุเพิ่มเติม</p>
-                    <p className="font-medium">{order.note}</p>
-                  </div>
-                )}
+              <div className="text-right">
+                <p className="text-sm text-orange-100">เลขที่อ้างอิง</p>
+                <p className="text-lg font-mono font-bold">{order.reference_no}</p>
               </div>
             </div>
           </div>
 
-          {/* Order Summary */}
-          <div className="space-y-6">
-            <div className="card">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">
-                คอร์สที่เลือก
-              </h2>
-              <div className="space-y-4">
-                {order.items.map((item, index) => (
-                  <div key={index} className="pb-4 border-b border-gray-100 last:border-b-0">
-                    <h3 className="font-semibold text-gray-900 mb-2">
-                      {item.name}
-                    </h3>
-                    
-                    {item.item_type === 'custom_bundle' && item.bundle_detail && (
-                      <div className="text-sm text-gray-600 mb-2">
-                        <p className="font-medium mb-1">รายละเอียด:</p>
-                        {item.bundle_detail.selected_items.map((bundleItem, i) => (
-                          <div key={i} className="pl-2">
-                            • {bundleItem.product_name} x{bundleItem.quantity}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500">
-                        {item.item_type === 'custom_bundle' ? 'คอร์สจัดเอง' :
-                         item.item_type === 'predefined_course' ? 'คอร์สสำเร็จรูป' :
-                         'อุปกรณ์เพิ่มเติม'}
-                        {item.quantity > 1 ? ` x${item.quantity}` : ''}
-                      </span>
-                      <span className="font-semibold text-art-600">
+          {/* Studio Info */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">ข้อมูลสตูดิโอ</h3>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p><strong>คุณ อนุรักษ์ สุขนันทศักดิ์</strong></p>
+                  <p>77/1 บางแวก แขวงบางไผ่ เขตบางแค</p>
+                  <p>ซอยจรัญสนิทวงค์ 13</p>
+                  <p>ในทางเข้าหมู่บ้านธีรินทร์</p>
+                  <p>กรุงเทพ 10160</p>
+                  <div className="pt-2">
+                    <p>📞 085-042-4116, 081-536-4384</p>
+                    <p>📧 arthomestudio@hotmail.com</p>
+                    <p>📧 arthomestudio@gmail.com</p>
+                    <p>📍 LINE: AUM_ART_HOME</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">ใบเสร็จรับเงิน</h3>
+                <div className="text-sm text-gray-600">
+                  <p>วันที่: {new Date().toLocaleDateString('th-TH', {
+                    year: 'numeric',
+                    month: 'long', 
+                    day: 'numeric'
+                  })}</p>
+                  <div className="mt-3">
+                    <h4 className="font-semibold text-gray-900">ลูกค้า:</h4>
+                    <p>{order.parent_name}</p>
+                    <p>📞 {order.parent_phone}</p>
+                    {order.parent_line_id && <p>📱 {order.parent_line_id}</p>}
+                    <p><strong>นักเรียน:</strong> {order.student_name} (เพศ{order.student_gender}, อายุ {order.student_age} ปี)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Course Details Table */}
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">รายการคอร์สเรียน</h3>
+            
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">รายการ</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">จำนวน</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">ราคา</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">รวม</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {order.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-4">
+                        <div>
+                          <p className="font-semibold text-gray-900">{item.name}</p>
+                          {item.item_type === 'custom_bundle' && item.bundle_detail && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {item.bundle_detail.selected_items.map((bundleItem, i) => (
+                                <div key={i}>• {bundleItem.product_name} × {bundleItem.quantity}</div>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            {item.item_type === 'custom_bundle' 
+                              ? `คอร์สจัดเอง 5 ครั้ง (${item.bundle_detail ? item.bundle_detail.selected_items.reduce((total, i) => total + (i.session_hours * i.quantity), 0) : 0} ชั่วโมง)`
+                              : item.item_type === 'predefined_course' 
+                                ? 'คอร์สสำเร็จรูป' 
+                                : 'อุปกรณ์เพิ่มเติม'
+                            }
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-center text-sm text-gray-900">
+                        {item.quantity}
+                      </td>
+                      <td className="px-4 py-4 text-right text-sm text-gray-900">
+                        {formatPrice(item.unit_price)}
+                      </td>
+                      <td className="px-4 py-4 text-right font-semibold text-gray-900">
                         {formatPrice(item.line_total)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-50">
+                  <tr>
+                    <td colSpan={3} className="px-4 py-4 text-right font-bold text-gray-900">
+                      ยอดรวมทั้งสิ้น:
+                    </td>
+                    <td className="px-4 py-4 text-right font-bold text-xl text-art-600">
+                      {formatPrice(order.total_amount)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {order.note && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800"><strong>หมายเหตุ:</strong> {order.note}</p>
               </div>
-              
-              <div className="border-t pt-4 mt-4">
-                <div className="flex justify-between text-xl font-bold text-gray-900">
-                  <span>รวมทั้งสิ้น</span>
-                  <span className="text-art-600">{formatPrice(order.total_amount)}</span>
+            )}
+          </div>
+
+          {/* Payment Status */}
+          <div className="px-6 py-4 bg-green-50 border-t border-green-200">
+            <div className="flex items-center justify-center space-x-2 text-green-800">
+              <CheckCircleIcon className="w-6 h-6" />
+              <p className="font-semibold text-lg">โอนชำระคอร์สเรียนเรียบร้อย</p>
+            </div>
+          </div>
+
+          {/* Thank You Message */}
+          <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 border-t border-gray-200">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                🎉 ขอบคุณสำหรับการสมัครเรียน
+              </h3>
+              <p className="text-lg text-gray-700 mb-2">
+                สมัครแล้ว แอดไลน์ครูอ่ำได้เลยครับ
+              </p>
+            </div>
+
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+              <div className="text-center">
+                <div className="bg-white p-4 rounded-2xl shadow-lg inline-block">
+                  <Image
+                    src="/images/contact.jpg"
+                    alt="LINE QR Code - Add ครูอ่ำ"
+                    width={200}
+                    height={200}
+                    className="w-48 h-48 mx-auto"
+                  />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-gray-900">
+                  📱 สแกนเพื่อแอดไลน์ครูอ่ำ
+                </p>
+                <p className="text-xs text-gray-500">LINE: AUM_ART_HOME</p>
+              </div>
+
+              <div className="text-center space-y-3">
+                <div className="bg-white p-4 rounded-xl shadow-md">
+                  <h4 className="font-bold text-gray-900 mb-2">📍 แผนที่สตูดิโอ</h4>
+                  <a 
+                    href="https://maps.app.goo.gl/GnmSW47U39xsUAr76?g_st=ac"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 underline text-sm"
+                  >
+                    คลิกดูแผนที่ใน Google Maps
+                  </a>
+                </div>
+                
+                <div className="bg-white p-4 rounded-xl shadow-md">
+                  <h4 className="font-bold text-gray-900 mb-2">⏰ ขั้นตอนถัดไป</h4>
+                  <ul className="text-xs text-gray-600 text-left space-y-1">
+                    <li>1. แอดไลน์ครูอ่ำ (QR Code ด้านซ้าย)</li>
+                    <li>2. ส่งรูปหน้านี้แสดงการสมัคร</li>
+                    <li>3. จัดตารางเรียนตามสะดวก</li>
+                    <li>4. เริ่มเรียนและสร้างสรรค์ผลงาน! 🎨</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Next Steps */}
-        <div className="mt-12 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            🚀 ขั้นตอนถัดไป
-          </h3>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <PhoneIcon className="w-6 h-6 text-blue-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">1. รอการติดต่อ</h4>
-              <p className="text-gray-600 text-sm">
-                ทีมงานจะโทรหาภายใน 4 ชั่วโมง (เวลาทำการ)
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ClockIcon className="w-6 h-6 text-green-600" />
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">2. จัดตารางเรียน</h4>
-              <p className="text-gray-600 text-sm">
-                ยืนยันรายละเอียดและจองเวลาเรียนที่สะดวก
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🎨</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">3. เริ่มเรียน</h4>
-              <p className="text-gray-600 text-sm">
-                ชำระเงินและเริ่มเรียนได้เลย!
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Info */}
-        <div className="mt-8 card bg-gray-50">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
-            📞 ติดต่อเรา
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
-            <div>
-              <p><strong>โทร:</strong> 02-xxx-xxxx</p>
-              <p><strong>เวลาทำการ:</strong> 9:00 - 18:00 น.</p>
-            </div>
-            <div>
-              <p><strong>LINE:</strong> @23arthome</p>
-              <p><strong>อีเมล:</strong> info@23arthome.com</p>
-            </div>
+          {/* Receipt Footer */}
+          <div className="p-4 bg-gray-800 text-white text-center text-xs">
+            <p>*** ใบเสร็จรับเงิน 23arthome studio&tutor ***</p>
+            <p>เก็บใบเสร็จนี้ไว้เป็นหลักฐานการชำระเงิน | Receipt #{order.reference_no}</p>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-12 flex justify-center space-x-4">
-          <Link 
-            href="/"
-            className="btn-secondary flex items-center"
-          >
-            <HomeIcon className="w-5 h-5 mr-2" />
-            กลับหน้าหลัก
-          </Link>
-          <button
-            onClick={() => window.print()}
-            className="btn-secondary"
-          >
-            พิมพ์ใบยืนยัน
-          </button>
-        </div>
-
-        {/* Trust Message */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600">
-            ขอบคุณที่เชื่อมั่น 23 Art Home 
-            <br />
-            เราจะดูแลและพัฒนาทักษะศิลปะของน้องอย่างดีที่สุด 💖
-          </p>
+        <div className="mt-8 text-center space-y-4">
+          <div className="flex flex-wrap justify-center gap-4">
+            <button
+              onClick={handleCopyReference}
+              className="btn-secondary"
+            >
+              <DocumentDuplicateIcon className="w-4 h-4 mr-2" />
+              {copied ? 'คัดลอกแล้ว' : 'คัดลอกเลขอ้างอิง'}
+            </button>
+            
+            <button
+              onClick={() => window.print()}
+              className="btn-secondary"
+            >
+              🖨️ ปริ้นใบเสร็จ
+            </button>
+            
+            <Link href="/" className="btn-primary">
+              🏠 กลับหน้าหลัก
+            </Link>
+          </div>
         </div>
       </div>
     </div>
