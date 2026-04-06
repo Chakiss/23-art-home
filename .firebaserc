@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "arthome-4fa5e"
-  }
+  },
+  "targets": {
+    "arthome-4fa5e": {
+      "hosting": {
+        "art-home-23": [
+          "art-home-23"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

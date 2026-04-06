@@ -5,15 +5,16 @@ import Image from 'next/image';
 import { useEffect } from 'react';
 import { COURSE_CATEGORIES } from '@/types';
 import { useCart } from '@/hooks/useCart';
+import { useIsMounted } from '@/hooks/useIsMounted';
 import { trackEvent } from '@/lib/utils';
 import { ShoppingCartIcon } from '@heroicons/react/24/outline';
 
 export default function HomePage() {
   const { getItemCount } = useCart();
-  const cartItemCount = getItemCount();
+  const isMounted = useIsMounted();
+  const cartItemCount = isMounted ? getItemCount() : 0;
 
   useEffect(() => {
-    // Track landing page view
     trackEvent('landing_view', {
       source: 'qr_scan',
       timestamp: new Date().toISOString(),
@@ -21,27 +22,25 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-art-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">23</span>
+    <div className="min-h-screen bg-white text-gray-900" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+
+      {/* Nav */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#e15d15' }}>
+              <span className="text-white font-bold text-xs">23</span>
             </div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              23 Art Home
-            </h1>
-          </div>
-          
-          {/* Cart Button */}
-          <Link 
-            href="/cart" 
-            className="relative p-2 text-gray-600 hover:text-art-500 transition-colors"
+            <span className="text-base font-semibold tracking-tight">23 Art Home</span>
+          </Link>
+
+          <Link
+            href="/cart"
+            className="relative p-1.5 text-gray-600 hover:text-black transition-colors"
           >
-            <ShoppingCartIcon className="w-6 h-6" />
+            <ShoppingCartIcon className="w-5 h-5" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-art-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+              <span className="absolute -top-0.5 -right-0.5 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium leading-none" style={{ backgroundColor: '#e15d15' }}>
                 {cartItemCount}
               </span>
             )}
@@ -49,191 +48,144 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative py-16 px-4 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[#f5f5f7]">
+        <div className="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
+          <p className="text-sm font-medium uppercase tracking-widest mb-5" style={{ color: '#e15d15' }}>
+            คอร์สศิลปะสำหรับเด็ก
+          </p>
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 leading-none mb-6">
+            ออกแบบคอร์สศิลปะ
+            <br />
+            <span style={{ color: '#e15d15' }}>ให้เป็นแบบของคุณ</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-500 font-light max-w-xl mx-auto leading-relaxed mb-10">
+            เลือกคอร์สเองหรือเลือกแบบสำเร็จรูป พร้อมอุปกรณ์ศิลปะครบชุด
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/custom-course"
+              className="inline-flex items-center justify-center text-white px-8 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#e15d15' }}
+            >
+              จัดคอร์สเอง
+            </Link>
+            <Link
+              href="/predefined-courses"
+              className="inline-flex items-center justify-center bg-white text-gray-900 border border-gray-300 px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              คอร์สสำเร็จรูป
+            </Link>
+          </div>
+        </div>
+
+        {/* Hero Image */}
+        <div className="relative h-72 md:h-96 w-full">
           <Image
             src="/images/arthome1.jpg"
-            alt="Art Studio Background"
+            alt="23 Art Home Studio"
             fill
-            className="object-cover opacity-10"
+            className="object-cover"
+            priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-white/80"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#f5f5f7]/60 to-transparent" />
         </div>
-        
-        <div className="relative z-10 container mx-auto max-w-4xl text-center">
-          {/* Decorative Elements */}
-          <div className="relative mb-8">
-            <div className="absolute left-1/4 top-4 w-12 h-12 bg-blue-100 rounded-full opacity-60 animate-bounce-slow"></div>
-            <div className="absolute right-1/3 top-8 w-8 h-8 bg-pink-100 rounded-full opacity-40 animate-pulse-slow"></div>
-            <div className="absolute left-1/3 bottom-4 w-6 h-6 bg-yellow-100 rounded-full opacity-50"></div>
-            
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[0.85] tracking-tighter mb-6">
-              ออกแบบคอร์สศิลปะให้สนุก
-              <br />
-              <span className="bg-gradient-to-r from-art-500 to-art-600 bg-clip-text text-transparent drop-shadow-sm">
-                มันส์ให้สุด
-              </span>
-              <br />
-              ทุกความฝัน
-            </h1>
-          </div>
-          
-          <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-            เลือกได้ทั้งแบบจัดคอร์สเอง หรือเลือกคอร์สสำเร็จรูป 
-            <br />
-            พร้อมอุปกรณ์ศิลปะครบชุด
-          </p>
+      </section>
 
-          {/* Age and Duration Info */}
-          <div className="grid md:grid-cols-2 gap-4 max-w-lg mx-auto mb-16">
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-gray-100">
-              <div className="text-center">
-                <div className="text-2xl mb-2">👶</div>
-                <div className="font-semibold text-gray-900">อายุ 4-6 ปี</div>
-                <div className="text-sm text-gray-600">ครั้งละ 1 ชม.</div>
-              </div>
-            </div>
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-gray-100">
-              <div className="text-center">
-                <div className="text-2xl mb-2">🧒</div>
-                <div className="font-semibold text-gray-900">อายุ 6-12 ปี</div>
-                <div className="text-sm text-gray-600">ครั้งละ 2 ชม.</div>
-              </div>
-            </div>
-          </div>
+      {/* Age info strip */}
+      <section className="border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-6 py-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-1">
+          <p className="text-sm text-gray-500">
+            <span className="font-medium text-gray-700">อายุ 4–6 ปี</span> · ครั้งละ 1 ชั่วโมง
+          </p>
+          <span className="hidden sm:block w-px h-4 bg-gray-200" />
+          <p className="text-sm text-gray-500">
+            <span className="font-medium text-gray-700">อายุ 6–12 ปี</span> · ครั้งละ 2 ชั่วโมง
+          </p>
         </div>
       </section>
 
       {/* Course Categories */}
-      <section className="py-20 px-4 bg-white/50">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-4">
-            เลือกประเภทคอร์สที่ต้องการ
-          </h2>
-          <p className="text-lg text-gray-600 text-center mb-16 max-w-2xl mx-auto">
-            เราออกแบบคอร์สให้เหมาะกับความต้องการที่แตกต่างกัน
-          </p>
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-sm font-medium uppercase tracking-widest mb-3" style={{ color: '#e15d15' }}>ประเภทคอร์ส</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+              เลือกแบบที่ใช่สำหรับคุณ
+            </h2>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {COURSE_CATEGORIES.map((category, index) => (
+          <div className="grid md:grid-cols-3 gap-4">
+            {COURSE_CATEGORIES.map((category) => (
               <Link
                 key={category.id}
                 href={category.route}
                 onClick={() => trackEvent('category_view', { category: category.id })}
-                className="group block"
+                className="group block bg-[#f5f5f7] rounded-3xl p-8 hover:bg-[#e8e8ed] transition-colors"
               >
-                <div className="card hover:shadow-xl hover:scale-105 transform transition-all duration-300 relative overflow-hidden">
-                  {/* Background Pattern */}
-                  <div className="absolute inset-0 opacity-5">
-                    <div className="absolute top-4 right-4 text-6xl">{category.icon}</div>
-                    <div className="absolute bottom-4 left-4 text-8xl font-black text-gray-200">
-                      {String(index + 1).padStart(2, '0')}
-                    </div>
-                  </div>
-                  
-                  <div className="relative z-10">
-                    {/* Icon */}
-                    <div className="text-5xl mb-6 group-hover:animate-bounce">
-                      {category.icon}
-                    </div>
-                    
-                    {/* Title */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">
-                      {category.name}
-                    </h3>
-                    
-                    {/* Description */}
-                    <p className="text-gray-600 mb-8 leading-relaxed">
-                      {category.description}
-                    </p>
-                    
-                    {/* CTA */}
-                    <div className="inline-flex items-center text-art-600 font-medium group-hover:text-art-700 transition-colors">
-                      เลือกคอร์สนี้
-                      <svg 
-                        className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
+                <div className="text-3xl mb-6">{category.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2 tracking-tight">
+                  {category.name}
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed mb-6">
+                  {category.description}
+                </p>
+                <span className="text-sm font-medium group-hover:underline" style={{ color: '#e15d15' }}>
+                  เลือกคอร์สนี้ →
+                </span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
+      {/* Features */}
+      <section className="py-24 px-6 bg-[#f5f5f7]">
+        <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              ทำไมต้อง 23 Art Home
+            <p className="text-sm font-medium uppercase tracking-widest mb-3" style={{ color: '#e15d15' }}>ทำไมต้อง 23 Art Home</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+              เรียนรู้อย่างมีคุณภาพ
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              เรามุ่งมั่นให้เด็กๆ ได้เรียนรู้และสนุกกับศิลปะอย่างมีคุณภาพ
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-200 rounded-2xl overflow-hidden">
             {[
-              {
-                icon: '👨‍🎨',
-                title: 'ครูผู้เชี่ยวชาญ',
-                description: 'ครูที่มีประสบการณ์และความเชี่ยวชาญด้านศิลปะ'
-              },
-              {
-                icon: '🎨',
-                title: 'อุปกรณ์คุณภาพสูง',
-                description: 'อุปกรณ์ศิลปะที่มีคุณภาพและปลอดภัยสำหรับเด็ก'
-              },
-              {
-                icon: '🏆',
-                title: 'หลักสูตรมาตรฐาน',
-                description: 'หลักสูตรที่ออกแบบเฉพาะตามช่วงอายุ'
-              },
-              {
-                icon: '💝',
-                title: 'บรรยากาศอบอุ่น',
-                description: 'สภาพแวดล้อมที่เอื้อต่อการเรียนรู้และความคิดสร้างสรรค์'
-              }
-            ].map((feature, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              { icon: '👨‍🎨', title: 'ครูผู้เชี่ยวชาญ', description: 'มีประสบการณ์และความเชี่ยวชาญด้านศิลปะ' },
+              { icon: '🎨', title: 'อุปกรณ์คุณภาพสูง', description: 'คุณภาพดีและปลอดภัยสำหรับเด็ก' },
+              { icon: '🏆', title: 'หลักสูตรมาตรฐาน', description: 'ออกแบบเฉพาะตามช่วงอายุ' },
+              { icon: '💝', title: 'บรรยากาศอบอุ่น', description: 'เอื้อต่อการเรียนรู้และความคิดสร้างสรรค์' },
+            ].map((feature, i) => (
+              <div key={i} className="bg-white p-8 text-center">
+                <div className="text-3xl mb-4">{feature.icon}</div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-art-500 to-art-600 text-white">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            พร้อมเริ่มเรียนกับเราแล้วใช่มั้ย?
+      {/* CTA */}
+      <section className="py-24 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+            พร้อมเริ่มแล้วหรือยัง?
           </h2>
-          <p className="text-xl mb-8 opacity-90">
-            เลือกคอร์สที่เหมาะกับน้องและเริ่มต้นการเรียนรู้ศิลปะที่สนุกสนาน
+          <p className="text-xl text-gray-500 font-light mb-10">
+            เลือกคอร์สที่เหมาะกับน้อง และเริ่มต้นการเรียนรู้ศิลปะที่สนุกสนาน
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
               href="/custom-course"
-              className="bg-white text-art-600 hover:bg-gray-50 font-semibold py-4 px-8 rounded-xl transition-colors shadow-lg hover:shadow-xl"
+              className="inline-flex items-center justify-center text-white px-8 py-3 rounded-full text-sm font-medium transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#e15d15' }}
             >
               จัดคอร์สเอง 5 ครั้ง
             </Link>
-            <Link 
+            <Link
               href="/predefined-courses"
-              className="bg-art-700 hover:bg-art-800 text-white font-semibold py-4 px-8 rounded-xl transition-colors shadow-lg hover:shadow-xl"
+              className="inline-flex items-center justify-center bg-white text-gray-900 border border-gray-300 px-8 py-3 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors"
             >
               เลือกคอร์สสำเร็จรูป
             </Link>
@@ -242,41 +194,44 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-8">
+      <footer className="border-t border-gray-200 py-16 px-6 bg-[#f5f5f7]">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-12 mb-12">
             <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-art-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">23</span>
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#e15d15' }}>
+                  <span className="text-white font-bold text-xs">23</span>
                 </div>
-                <span className="text-xl font-semibold">23 Art Home</span>
+                <span className="font-semibold tracking-tight">23 Art Home</span>
               </div>
-              <p className="text-gray-400">
+              <p className="text-sm text-gray-500 leading-relaxed">
                 พัฒนาความคิดสร้างสรรค์และทักษะศิลปะของน้องๆ ในบรรยากาศที่อบอุ่นและเป็นมิตร
               </p>
             </div>
-            
+
             <div>
-              <h3 className="font-semibold mb-4">ติดต่อเรา</h3>
-              <div className="space-y-2 text-gray-400">
-                <p>📞 โทร: 02-xxx-xxxx</p>
-                <p>📧 อีเมล: info@23arthome.com</p>
-                <p>📍 ที่อยู่: กรุงเทพฯ</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">ติดต่อเรา</h3>
+              <div className="space-y-2 text-sm text-gray-500">
+                <p className="font-medium text-gray-700">คุณอนุรักษ์ สุขนันทศักดิ์</p>
+                <p>77/1 ซอยจรัญสนิทวงค์ 13<br />บางแวก บางไผ่ บางแค<br />กรุงเทพฯ 10160<br />(ในทางเข้าหมู่บ้านธีรินทร์)</p>
+                <p>📞 085-042-4116, 081-536-4384</p>
+                <p>📧 arthomestudio@hotmail.com</p>
+                <p>📧 arthomestudio@gmail.com</p>
+                <p>LINE: AUM_ART_HOME</p>
               </div>
             </div>
-            
+
             <div>
-              <h3 className="font-semibold mb-4">เวลาเปิด</h3>
-              <div className="space-y-2 text-gray-400">
-                <p>จันทร์ - ศุกร์: 09:00 - 18:00</p>
-                <p>เสาร์ - อาทิตย์: 09:00 - 17:00</p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">เวลาเปิด</h3>
+              <div className="space-y-2 text-sm text-gray-500">
+                <p>จันทร์ – ศุกร์: 09:00 – 18:00</p>
+                <p>เสาร์ – อาทิตย์: 09:00 – 17:00</p>
               </div>
             </div>
           </div>
-          
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2026 23 Art Home. สงวนลิขสิทธิ์.</p>
+
+          <div className="border-t border-gray-200 pt-8 text-center">
+            <p className="text-xs text-gray-400">&copy; 2026 23 Art Home. สงวนลิขสิทธิ์.</p>
           </div>
         </div>
       </footer>

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/useCart';
 import { OrderService } from '@/lib/orderService';
+import { AdminService } from '@/lib/adminService';
 import { CheckoutFormData } from '@/types';
 import { formatPrice, isValidPhoneNumber } from '@/lib/utils';
 import { 
@@ -126,6 +127,12 @@ export default function CheckoutPage() {
     // }
     
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setTimeout(() => {
+        const firstError = document.querySelector('[data-error="true"]');
+        firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -193,7 +200,7 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -209,11 +216,28 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Submit order
-      const result = await OrderService.submitOrder(cart, formData);
-      
+      // Upload slip directly to Firebase Storage
+      let slipUrl: string | undefined;
+      if (slipFile) {
+        setIsUploadingSlip(true);
+        try {
+          slipUrl = await AdminService.uploadImage(slipFile, 'payment_slips', `slip_${Date.now()}`, 0);
+        } catch (uploadError: any) {
+          const proceed = confirm(`ไม่สามารถอัพโหลดสลิปได้: ${uploadError.message}\n\nต้องการส่งข้อมูลโดยไม่มีสลิปหรือไม่?`);
+          if (!proceed) {
+            setIsSubmitting(false);
+            setIsUploadingSlip(false);
+            return;
+          }
+        } finally {
+          setIsUploadingSlip(false);
+        }
+      }
+
+      // Submit order with slip URL
+      const result = await OrderService.submitOrder(cart, formData, slipUrl);
+
       if (result.success && result.order) {
-        // Clear cart and redirect to success page
         clearCart();
         router.push(`/success?ref=${result.order.reference_no}`);
       } else {
@@ -278,7 +302,7 @@ export default function CheckoutPage() {
                       placeholder="เช่น นาย สมชาย ใจดี"
                     />
                     {errors.parent_name && (
-                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <p data-error="true" className="mt-1 text-sm text-red-600 flex items-center">
                         <ExclamationCircleIcon className="w-4 h-4 mr-1" />
                         {errors.parent_name}
                       </p>
@@ -298,7 +322,7 @@ export default function CheckoutPage() {
                       maxLength={10}
                     />
                     {errors.parent_phone && (
-                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <p data-error="true" className="mt-1 text-sm text-red-600 flex items-center">
                         <ExclamationCircleIcon className="w-4 h-4 mr-1" />
                         {errors.parent_phone}
                       </p>
@@ -347,7 +371,7 @@ export default function CheckoutPage() {
                       placeholder="เช่น น้องมิกกี้"
                     />
                     {errors.student_name && (
-                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <p data-error="true" className="mt-1 text-sm text-red-600 flex items-center">
                         <ExclamationCircleIcon className="w-4 h-4 mr-1" />
                         {errors.student_name}
                       </p>
@@ -383,7 +407,7 @@ export default function CheckoutPage() {
                     ))}
                   </select>
                   {errors.student_age && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <p data-error="true" className="mt-1 text-sm text-red-600 flex items-center">
                       <ExclamationCircleIcon className="w-4 h-4 mr-1" />
                       {errors.student_age}
                     </p>
@@ -663,7 +687,7 @@ export default function CheckoutPage() {
                     : 'bg-art-500 hover:bg-art-600 text-white shadow-lg hover:shadow-xl'
                 }`}
               >
-                {isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอลงทะเบียนพร้อมสลิป'}
+                {isUploadingSlip ? 'กำลังอัพโหลดสลิป...' : isSubmitting ? 'กำลังส่งข้อมูล...' : 'ส่งคำขอลงทะเบียนพร้อมสลิป'}
               </button>
               
               <p className="text-sm text-gray-600">

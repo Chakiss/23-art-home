@@ -2,99 +2,82 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { PREDEFINED_COURSES } from '@/types';
 import { useCart } from '@/hooks/useCart';
+import { usePredefinedCourses } from '@/hooks/useCourseData';
+import { useIsMounted } from '@/hooks/useIsMounted';
 import { trackEvent, formatPrice } from '@/lib/utils';
-import { 
-  ArrowLeftIcon, 
-  ShoppingCartIcon,
-  ClockIcon,
-  UserGroupIcon,
-  CheckCircleIcon,
-  PlusIcon
-} from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ShoppingCartIcon, ClockIcon, UserGroupIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+
+const ORANGE = '#e15d15';
 
 export default function PredefinedCoursesPage() {
   const router = useRouter();
   const { addItem, getItemCount } = useCart();
-  const cartItemCount = getItemCount();
-  
+  const { courses, loading, error } = usePredefinedCourses();
+  const isMounted = useIsMounted();
+  const cartItemCount = isMounted ? getItemCount() : 0;
   const [addingItems, setAddingItems] = useState<Set<string>>(new Set());
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-  const handleAddToCart = useCallback(async (course: typeof PREDEFINED_COURSES[0]) => {
+  const handleAddToCart = useCallback(async (course: (typeof courses)[0]) => {
     setAddingItems(prev => new Set([...prev, course.product_id]));
-    
-    try {
-      addItem({
-        product_id: course.product_id,
-        name: course.product_name,
-        price: course.price,
-        type: 'predefined_course',
-        quantity: 1,
-      });
-
-      trackEvent('add_to_cart', {
-        item_type: 'predefined_course',
-        item_name: course.product_name,
-        price: course.price,
-        category: course.category_name,
-      });
-
-      // Show success feedback
-      setTimeout(() => {
-        setAddingItems(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(course.product_id);
-          return newSet;
-        });
-      }, 1000);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      setAddingItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(course.product_id);
-        return newSet;
-      });
-    }
+    addItem({ product_id: course.product_id, name: course.product_name, price: course.price, type: 'predefined_course', quantity: 1 });
+    trackEvent('add_to_cart', { item_type: 'predefined_course', item_name: course.product_name, price: course.price });
+    setTimeout(() => {
+      setAddingItems(prev => { const s = new Set(prev); s.delete(course.product_id); return s; });
+    }, 1000);
   }, [addItem]);
 
-  const handleQuickOrder = useCallback((course: typeof PREDEFINED_COURSES[0]) => {
+  const handleQuickOrder = useCallback((course: (typeof courses)[0]) => {
     handleAddToCart(course);
-    setTimeout(() => {
-      router.push('/cart');
-    }, 1200);
+    setTimeout(() => router.push('/cart'), 1200);
   }, [handleAddToCart, router]);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link 
-              href="/"
-              className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeftIcon className="w-6 h-6" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                คอร์สสำเร็จรูป
-              </h1>
-              <p className="text-sm text-gray-500">
-                คอร์สที่ออกแบบมาเป็นชุดสำเร็จรูป
-              </p>
-            </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="max-w-5xl mx-auto px-6 py-24">
+          <div className="grid md:grid-cols-3 gap-4 animate-pulse">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 bg-[#f5f5f7] rounded-3xl" />
+            ))}
           </div>
-          
-          <Link 
-            href="/cart" 
-            className="relative p-2 text-gray-600 hover:text-art-500 transition-colors"
-          >
-            <ShoppingCartIcon className="w-6 h-6" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="text-white px-6 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: ORANGE }}>
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+
+      {/* Nav */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Link href="/" className="text-gray-500 hover:text-black transition-colors">
+              <ArrowLeftIcon className="w-5 h-5" />
+            </Link>
+            <span className="text-base font-semibold tracking-tight">คอร์สสำเร็จรูป</span>
+          </div>
+          <Link href="/cart" className="relative p-1.5 text-gray-600 hover:text-black transition-colors">
+            <ShoppingCartIcon className="w-5 h-5" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-art-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+              <span className="absolute -top-0.5 -right-0.5 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium leading-none" style={{ backgroundColor: ORANGE }}>
                 {cartItemCount}
               </span>
             )}
@@ -102,172 +85,129 @@ export default function PredefinedCoursesPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            เลือกคอร์สสำเร็จรูป
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            คอร์สที่ออกแบบมาอย่างลงตัว พร้อมหลักสูตรที่เชื่อมโยงกัน 
-            เหมาะสำหรับเด็กที่ต้องการเรียนรู้ทักษะเฉพาะด้าน
+      {/* Hero */}
+      <section className="bg-[#f5f5f7] py-16 px-6 text-center">
+        <div className="max-w-2xl mx-auto">
+          <p className="text-sm font-medium uppercase tracking-widest mb-3" style={{ color: ORANGE }}>คอร์สสำเร็จรูป</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
+            เลือกแล้วเรียนได้เลย
+          </h1>
+          <p className="text-lg text-gray-500 font-light">
+            คอร์สที่ออกแบบมาอย่างลงตัว พร้อมหลักสูตรที่เชื่อมโยงกัน เหมาะสำหรับเด็กที่ต้องการเรียนทักษะเฉพาะด้าน
           </p>
         </div>
+      </section>
 
-        {/* Course Benefits */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircleIcon className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">หลักสูตรมาตรฐาน</h3>
-            <p className="text-gray-600 text-sm">ออกแบบโดยครูผู้เชี่ยวชาญ</p>
+      {/* Stats strip */}
+      <section className="border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-6 py-5 grid grid-cols-3 divide-x divide-gray-200">
+          <div className="text-center px-4">
+            <p className="text-sm font-semibold text-gray-900">5 ครั้ง</p>
+            <p className="text-xs text-gray-500">ต่อคอร์ส</p>
           </div>
-          
-          <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <ClockIcon className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">5 ครั้ง 10 ชั่วโมง</h3>
-            <p className="text-gray-600 text-sm">เวลาเรียนที่เหมาะสม</p>
+          <div className="text-center px-4">
+            <p className="text-sm font-semibold text-gray-900">10 ชั่วโมง</p>
+            <p className="text-xs text-gray-500">รวมทั้งคอร์ส</p>
           </div>
-          
-          <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <UserGroupIcon className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900 mb-2">อายุ 4-12 ปี</h3>
-            <p className="text-gray-600 text-sm">เหมาะกับทุกช่วงอายุ</p>
+          <div className="text-center px-4">
+            <p className="text-sm font-semibold text-gray-900">อายุ 4–12 ปี</p>
+            <p className="text-xs text-gray-500">ทุกช่วงอายุ</p>
           </div>
         </div>
+      </section>
 
-        {/* Course Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {PREDEFINED_COURSES.map((course, index) => {
-            const isAdding = addingItems.has(course.product_id);
-            
-            return (
-              <div key={course.product_id} className="card hover:shadow-xl transition-all duration-300 group">
-                {/* Course Number Badge */}
-                <div className="absolute top-4 right-4 w-8 h-8 bg-art-100 rounded-full flex items-center justify-center">
-                  <span className="text-art-600 font-bold text-sm">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                </div>
+      {/* Course Grid */}
+      <section className="py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {courses.map((course) => {
+              const isAdding = addingItems.has(course.product_id);
+              const imageUrl = course.image_urls?.[0] ?? course.gallery?.mainImage?.url ?? null;
+              const showImage = imageUrl && !failedImages.has(course.product_id);
 
-                {/* Course Content */}
-                <div className="relative pt-2">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 pr-12 leading-tight">
-                    {course.product_name}
-                  </h3>
-                  
-                  <p className="text-gray-600 mb-6 leading-relaxed">
-                    {course.description}
-                  </p>
-                  
-                  {/* Course Details */}
-                  <div className="space-y-2 mb-6">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <ClockIcon className="w-4 h-4 mr-2" />
-                      <span>{course.duration_hours} ชั่วโมง (5 ครั้ง)</span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <UserGroupIcon className="w-4 h-4 mr-2" />
-                      <span>เด็กอายุ {course.age_min}-{course.age_max} ปี</span>
-                    </div>
+              return (
+                <div key={course.product_id} className="bg-[#f5f5f7] rounded-3xl overflow-hidden flex flex-col">
+                  {/* Image */}
+                  <div className="aspect-video bg-gray-200 relative">
+                    {showImage ? (
+                      <Image
+                        src={imageUrl!}
+                        alt={course.product_name}
+                        fill
+                        className="object-cover"
+                        onError={() => setFailedImages(prev => new Set([...prev, course.product_id]))}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-4xl">📚</div>
+                    )}
                   </div>
-                  
-                  {/* Price */}
-                  <div className="text-2xl font-bold text-art-600 mb-6">
-                    {formatPrice(course.price)}
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
-                    <button
-                      onClick={() => handleAddToCart(course)}
-                      disabled={isAdding}
-                      className={`w-full py-3 px-6 rounded-lg font-semibold transition-all ${
-                        isAdding
-                          ? 'bg-green-500 text-white'
-                          : 'bg-art-500 hover:bg-art-600 text-white hover:shadow-lg'
-                      }`}
-                    >
-                      {isAdding ? (
-                        <span className="flex items-center justify-center">
-                          <CheckCircleIcon className="w-5 h-5 mr-2" />
-                          เพิ่มแล้ว!
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center">
-                          <PlusIcon className="w-5 h-5 mr-2" />
-                          เพิ่มเข้าตะกร้า
-                        </span>
-                      )}
-                    </button>
-                    
-                    <button
-                      onClick={() => handleQuickOrder(course)}
-                      disabled={isAdding}
-                      className="w-full py-3 px-6 rounded-lg font-semibold bg-white text-art-600 border-2 border-art-200 hover:border-art-300 hover:bg-art-50 transition-all disabled:opacity-50"
-                    >
-                      เลือกแล้วสั่งเลย
-                    </button>
+
+                  {/* Content */}
+                  <div className="p-6 flex flex-col flex-1">
+                    <h3 className="text-lg font-semibold tracking-tight text-gray-900 mb-2">{course.product_name}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-4 flex-1">{course.description}</p>
+
+                    <div className="flex flex-col gap-1 text-xs text-gray-400 mb-5">
+                      <span className="flex items-center gap-1.5">
+                        <UserGroupIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>4–6 ปี</span>
+                        <span className="text-gray-300">·</span>
+                        <span>5 ครั้ง</span>
+                        <span className="text-gray-300">·</span>
+                        <ClockIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>5 ชม.</span>
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <UserGroupIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>6–12 ปี</span>
+                        <span className="text-gray-300">·</span>
+                        <span>5 ครั้ง</span>
+                        <span className="text-gray-300">·</span>
+                        <ClockIcon className="w-3.5 h-3.5 shrink-0" />
+                        <span>10 ชม.</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <p className="text-xl font-bold text-gray-900">{formatPrice(course.price)}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleQuickOrder(course)}
+                          disabled={isAdding}
+                          className="text-sm font-medium px-4 py-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40"
+                        >
+                          สั่งเลย
+                        </button>
+                        <button
+                          onClick={() => handleAddToCart(course)}
+                          disabled={isAdding}
+                          className="text-sm font-medium px-4 py-2 rounded-full text-white transition-opacity hover:opacity-90 disabled:opacity-40 flex items-center gap-1.5"
+                          style={{ backgroundColor: ORANGE }}
+                        >
+                          {isAdding ? <><CheckCircleIcon className="w-4 h-4" />เพิ่มแล้ว</> : '+ ตะกร้า'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Additional Info */}
-        <div className="mt-16 p-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
-            🎨 ข้อดีของคอร์สสำเร็จรูป
-          </h3>
-          
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">✨ หลักสูตรครบเครื่อง</h4>
-              <ul className="text-gray-700 space-y-2 text-sm">
-                <li>• เรียนรู้ทักษะจากพื้นฐานจนถึงขั้นสูง</li>
-                <li>• แต่ละครั้งเชื่อมโยงกันอย่างลงตัว</li>
-                <li>• มีการทบทวนและพัฒนาต่อเนื่อง</li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-3">🏆 ประหยัดเวลา</h4>
-              <ul className="text-gray-700 space-y-2 text-sm">
-                <li>• ไม่ต้องคิดว่าจะเลือกวิชาอะไร</li>
-                <li>• ครูได้เตรียมเนื้อหาล่วงหน้า</li>
-                <li>• เริ่มเรียนได้ทันที</li>
-              </ul>
-            </div>
+              );
+            })}
           </div>
         </div>
+      </section>
 
-        {/* CTA Section */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-6">
-            ยังไม่แน่ใจ? ลองดูคอร์สจัดเองหรือเลือกอุปกรณ์เพิ่มเติม
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/custom-course"
-              className="btn-secondary"
-            >
-              จัดคอร์สเอง 5 ครั้ง
-            </Link>
-            <Link 
-              href="/accessories"
-              className="btn-secondary"
-            >
-              อุปกรณ์ศิลปะ
-            </Link>
-          </div>
+      {/* Bottom CTA */}
+      <section className="py-16 px-6 bg-[#f5f5f7] text-center">
+        <p className="text-gray-500 text-sm mb-5">ยังไม่แน่ใจ? ลองดูตัวเลือกอื่น</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/custom-course" className="inline-flex items-center justify-center bg-white text-gray-900 border border-gray-300 px-7 py-2.5 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors">
+            จัดคอร์สเอง 5 ครั้ง
+          </Link>
+          <Link href="/accessories" className="inline-flex items-center justify-center bg-white text-gray-900 border border-gray-300 px-7 py-2.5 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors">
+            อุปกรณ์ศิลปะ
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

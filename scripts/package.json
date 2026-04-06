@@ -1,0 +1,13 @@
+{
+  "name": "arthome-data-management",
+  "version": "1.0.0",
+  "description": "Data management scripts for ArtHome project",
+  "scripts": {
+    "upload-data": "npm run build && node dist/scripts/uploadInitialData.js",
+    "setup-firestore": "npm run upload-data",
+    "build-scripts": "tsc src/scripts/*.ts --outDir dist --moduleResolution node --target es2020 --module commonjs"
+  },
+  "dependencies": {
+    "firebase": "^10.0.0"
+  }
+}

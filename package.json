@@ -9,18 +9,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "upload-data": "npx tsx scripts/uploadInitialData.ts",
+    "upload-simple": "npx tsx scripts/uploadSimpleData.ts",
+    "debug-firestore": "npx tsx scripts/debugFirestore.ts",
+    "upload-clean": "npx tsx scripts/uploadCleanData.ts",
+    "test-location": "npx tsx scripts/testLocationFix.ts",
+    "test-simple": "npx tsx src/scripts/testSimple.ts",
+    "test-minimal": "npx tsx src/scripts/testMinimal.ts",
+    "test-storage": "npx tsx src/scripts/testStorage.ts",
+    "setup-firestore": "npm run upload-data"
   },
   "dependencies": {
+    "@heroicons/react": "^2.0.18",
+    "clsx": "^2.1.0",
+    "dotenv": "^17.4.0",
+    "firebase": "^10.7.0",
+    "lucide-react": "^0.321.0",
     "next": "^14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "^5.3.0",
-    "firebase": "^10.7.0",
-    "@heroicons/react": "^2.0.18",
-    "lucide-react": "^0.321.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.2.0",
+    "typescript": "^5.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -30,6 +40,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.1.0",
     "postcss": "^8.4.0",
-    "tailwindcss": "^3.4.0"
+    "tailwindcss": "^3.4.0",
+    "tsx": "^4.21.0"
   }
 }

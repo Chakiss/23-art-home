@@ -1,6 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Course collections - allow public read access
+    match /custom_course_items/{document} {
+      allow read: if true;
+      allow write: if true; // TEMPORARY: Allow data upload
+    }
+    
+    match /predefined_courses/{document} {
+      allow read: if true;
+      allow write: if true; // TEMPORARY: Allow data upload
+    }
+    
+    match /accessories/{document} {
+      allow read: if true;
+      allow write: if true; // TEMPORARY: Allow data upload
+    }
+    
+    // Test collection for debugging
+    match /location_test/{document} {
+      allow read, write: if true;
+    }
+    
     // Orders collection - allow create and read
     match /orders/{orderId} {
       allow create: if true; // Allow order creation

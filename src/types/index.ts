@@ -1,4 +1,18 @@
-// Product Types
+// Image and Gallery Types
+export interface ImageData {
+  id: string;
+  url: string;
+  alt: string;
+  caption?: string;
+  order: number;
+}
+
+export interface GalleryData {
+  mainImage: ImageData;
+  galleryImages: ImageData[];
+}
+
+// Product Types (Updated with Gallery)
 export interface Product {
   product_id: string;
   product_name: string;
@@ -11,6 +25,8 @@ export interface Product {
   age_max: number;
   is_active: boolean;
   display_order: number;
+  image_urls?: string[];
+  gallery?: GalleryData;
 }
 
 // Custom Course Types
@@ -64,6 +80,7 @@ export interface Order {
   items: CartItem[];
   total_amount: number;
   status: 'submitted' | 'contacted' | 'confirmed' | 'cancelled';
+  slip_url?: string;
   created_at: string;
 }
 
@@ -106,7 +123,31 @@ export const COURSE_LESSON_ITEMS: Product[] = [
     age_min: 4,
     age_max: 12,
     is_active: true,
-    display_order: 1
+    display_order: 1,
+    gallery: {
+      mainImage: {
+        id: 'main_creative_drawing',
+        url: '/images/courses/creative-drawing-main.jpg',
+        alt: 'การวาดเส้นสร้างสรรค์',
+        order: 0
+      },
+      galleryImages: [
+        {
+          id: 'gallery_creative_1',
+          url: '/images/courses/creative-drawing-1.jpg',
+          alt: 'ตัวอย่างงานวาดเส้น',
+          caption: 'ผลงานนักเรียน - การวาดเส้นพื้นฐาน',
+          order: 1
+        },
+        {
+          id: 'gallery_creative_2', 
+          url: '/images/courses/creative-drawing-2.jpg',
+          alt: 'เทคนิคการวาดเส้น',
+          caption: 'เทคนิคการใช้เส้นสร้างลวดลาย',
+          order: 2
+        }
+      ]
+    }
   },
   {
     product_id: 'lesson_cartoon_graphics',
@@ -119,7 +160,24 @@ export const COURSE_LESSON_ITEMS: Product[] = [
     age_min: 4,
     age_max: 12,
     is_active: true,
-    display_order: 2
+    display_order: 2,
+    gallery: {
+      mainImage: {
+        id: 'main_cartoon',
+        url: '/images/courses/cartoon-main.jpg',
+        alt: 'การวาดการ์ตูน',
+        order: 0
+      },
+      galleryImages: [
+        {
+          id: 'gallery_cartoon_1',
+          url: '/images/courses/cartoon-1.jpg',
+          alt: 'ตัวการ์ตูนน่ารัก',
+          caption: 'เรียนรู้การสร้างตัวการ์ตูน',
+          order: 1
+        }
+      ]
+    }
   },
   {
     product_id: 'lesson_story_board',
@@ -188,7 +246,24 @@ export const PREDEFINED_COURSES: Product[] = [
     age_min: 4,
     age_max: 12,
     is_active: true,
-    display_order: 1
+    display_order: 1,
+    gallery: {
+      mainImage: {
+        id: 'main_watercolor',
+        url: '/images/courses/watercolor-main.jpg',
+        alt: 'คอร์สสีน้ำ',
+        order: 0
+      },
+      galleryImages: [
+        {
+          id: 'gallery_watercolor_1',
+          url: '/images/courses/watercolor-1.jpg',
+          alt: 'ภาพวาดสีน้ำ',
+          caption: 'ผลงานจากคอร์สสีน้ำ',
+          order: 1
+        }
+      ]
+    }
   },
   {
     product_id: 'course_acrylic',
@@ -296,7 +371,24 @@ export const ART_SUPPLY_PRODUCTS: Product[] = [
     age_min: 4,
     age_max: 12,
     is_active: true,
-    display_order: 1
+    display_order: 1,
+    gallery: {
+      mainImage: {
+        id: 'main_art_bag',
+        url: '/images/accessories/art-bag-main.jpg',
+        alt: 'กระเป๋าศิลปะ',
+        order: 0
+      },
+      galleryImages: [
+        {
+          id: 'gallery_art_bag_1',
+          url: '/images/accessories/art-bag-contents.jpg',
+          alt: 'เนื้อหาในกระเป๋า',
+          caption: 'อุปกรณ์ครบชุดในกระเป๋าศิลปะ',
+          order: 1
+        }
+      ]
+    }
   }
 ];
 

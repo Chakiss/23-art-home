@@ -2,145 +2,122 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { COURSE_LESSON_ITEMS, CustomCourseBundle, CustomCourseItem } from '@/types';
+import { CustomCourseBundle, CustomCourseItem } from '@/types';
 import { useCart } from '@/hooks/useCart';
+import { useCustomCourseItems } from '@/hooks/useCourseData';
+import { useIsMounted } from '@/hooks/useIsMounted';
 import { trackEvent, generateId, formatPrice } from '@/lib/utils';
-import { 
-  ArrowLeftIcon, 
-  ShoppingCartIcon, 
-  PlusIcon, 
-  MinusIcon,
-  CheckCircleIcon 
-} from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ShoppingCartIcon, PlusIcon, MinusIcon, CheckCircleIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 const REQUIRED_SESSIONS = 5;
+const ORANGE = '#e15d15';
 
 export default function CustomCoursePage() {
   const router = useRouter();
   const { addCustomBundle, getItemCount } = useCart();
-  const cartItemCount = getItemCount();
+  const { items, loading, error } = useCustomCourseItems();
+  const isMounted = useIsMounted();
 
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [gallery, setGallery] = useState<{ images: string[]; index: number } | null>(null);
 
-  // Calculate totals
-  const totalSessions = Object.values(selectedItems).reduce((sum, count) => sum + count, 0);
-  const totalPrice = Object.entries(selectedItems).reduce((sum, [productId, count]) => {
-    const item = COURSE_LESSON_ITEMS.find(item => item.product_id === productId);
-    return sum + (item ? item.price * count : 0);
+  const totalSessions = Object.values(selectedItems).reduce((sum, n) => sum + n, 0);
+  const totalPrice = Object.entries(selectedItems).reduce((sum, [id, qty]) => {
+    const item = items.find(i => i.product_id === id);
+    return sum + (item ? item.price * qty : 0);
   }, 0);
-
   const canConfirm = totalSessions === REQUIRED_SESSIONS;
   const sessionsRemaining = REQUIRED_SESSIONS - totalSessions;
+  const cartItemCount = isMounted ? getItemCount() : 0;
 
   useEffect(() => {
-    trackEvent('custom_course_progress', {
-      sessions_selected: totalSessions,
-      sessions_remaining: sessionsRemaining,
-    });
+    trackEvent('custom_course_progress', { sessions_selected: totalSessions, sessions_remaining: sessionsRemaining });
   }, [totalSessions, sessionsRemaining]);
 
   const updateItemCount = useCallback((productId: string, change: number) => {
     setSelectedItems(prev => {
       const currentCount = prev[productId] || 0;
       const newCount = Math.max(0, currentCount + change);
-      
-      // Prevent exceeding 5 total sessions
-      const currentTotal = Object.values(prev).reduce((sum, count) => sum + count, 0);
+      const currentTotal = Object.values(prev).reduce((s, n) => s + n, 0);
       const newTotal = currentTotal - currentCount + newCount;
-      
-      if (newTotal > REQUIRED_SESSIONS && change > 0) {
-        return prev; // Don't allow change that would exceed limit
-      }
-      
-      const newItems = { ...prev };
-      if (newCount === 0) {
-        delete newItems[productId];
-      } else {
-        newItems[productId] = newCount;
-      }
-      
-      return newItems;
+      if (newTotal > REQUIRED_SESSIONS && change > 0) return prev;
+      const next = { ...prev };
+      if (newCount === 0) delete next[productId];
+      else next[productId] = newCount;
+      return next;
     });
   }, []);
 
   const confirmCustomBundle = useCallback(async () => {
     if (!canConfirm) return;
-
     setIsSubmitting(true);
-    
     try {
-      // Convert selected items to CustomCourseItem format
       const bundleItems: CustomCourseItem[] = Object.entries(selectedItems).map(([productId, quantity]) => {
-        const product = COURSE_LESSON_ITEMS.find(item => item.product_id === productId)!;
-        return {
-          product_id: productId,
-          product_name: product.product_name,
-          unit_price: product.price,
-          quantity,
-          line_total: product.price * quantity,
-        };
+        const product = items.find(i => i.product_id === productId)!;
+        return { product_id: productId, product_name: product.product_name, unit_price: product.price, quantity, line_total: product.price * quantity };
       });
-
-      // Create bundle
       const bundle: CustomCourseBundle = {
-        bundle_id: generateId(),
-        session_count: 5,
-        selected_items: bundleItems,
-        bundle_total: totalPrice,
-        created_at: new Date().toISOString(),
+        bundle_id: generateId(), session_count: 5,
+        selected_items: bundleItems, bundle_total: totalPrice, created_at: new Date().toISOString(),
       };
-
-      // Add to cart
       addCustomBundle(bundle);
-
-      // Track completion
-      trackEvent('custom_course_completed', {
-        bundle_id: bundle.bundle_id,
-        total_price: totalPrice,
-        items_count: bundleItems.length,
-      });
-
-      // Redirect to cart
+      trackEvent('custom_course_completed', { bundle_id: bundle.bundle_id, total_price: totalPrice });
       router.push('/cart');
-    } catch (error) {
-      console.error('Error creating custom bundle:', error);
+    } catch (e) {
+      console.error(e);
       alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
     } finally {
       setIsSubmitting(false);
     }
-  }, [canConfirm, selectedItems, totalPrice, addCustomBundle, router]);
+  }, [canConfirm, selectedItems, totalPrice, addCustomBundle, router, items]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="max-w-3xl mx-auto px-6 py-24">
+          <div className="space-y-4 animate-pulse">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-24 bg-[#f5f5f7] rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="text-white px-6 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: ORANGE }}>
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+
+      {/* Nav */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Link 
-              href="/"
-              className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeftIcon className="w-6 h-6" />
+            <Link href="/" className="text-gray-500 hover:text-black transition-colors">
+              <ArrowLeftIcon className="w-5 h-5" />
             </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                คอร์สหลัก – จัดเองได้
-              </h1>
-              <p className="text-sm text-gray-500">
-                เลือกรายวิชาเองได้ 5 ครั้ง ครั้งละ 2 ชั่วโมง
-              </p>
-            </div>
+            <span className="text-base font-semibold tracking-tight">คอร์สหลัก – จัดเองได้</span>
           </div>
-          
-          <Link 
-            href="/cart" 
-            className="relative p-2 text-gray-600 hover:text-art-500 transition-colors"
-          >
-            <ShoppingCartIcon className="w-6 h-6" />
+          <Link href="/cart" className="relative p-1.5 text-gray-600 hover:text-black transition-colors">
+            <ShoppingCartIcon className="w-5 h-5" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-art-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+              <span className="absolute -top-0.5 -right-0.5 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium leading-none" style={{ backgroundColor: ORANGE }}>
                 {cartItemCount}
               </span>
             )}
@@ -148,135 +125,125 @@ export default function CustomCoursePage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Progress Section */}
-        <div className="card mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                สร้างคอร์สของน้อง
-              </h2>
-              <p className="text-gray-600">
-                เลือกรายวิชาให้ครบ {REQUIRED_SESSIONS} ครั้ง เพื่อสร้าง 1 คอร์ส
-              </p>
-            </div>
+      <div className="max-w-3xl mx-auto px-6 py-12">
+
+        {/* Progress */}
+        <div className="mb-12">
+          <p className="text-sm font-medium uppercase tracking-widest mb-3" style={{ color: ORANGE }}>เลือกรายวิชา</p>
+          <div className="flex items-end justify-between mb-6">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900">สร้างคอร์สของน้อง</h1>
             <div className="text-right">
-              <div className="text-3xl font-bold text-gray-900">{totalSessions}/{REQUIRED_SESSIONS}</div>
-              <div className="text-sm text-gray-500">ครั้งที่เลือกแล้ว</div>
+              <span className="text-5xl font-bold tracking-tight" style={{ color: totalSessions === REQUIRED_SESSIONS ? ORANGE : '#1d1d1f' }}>
+                {totalSessions}
+              </span>
+              <span className="text-2xl text-gray-400 font-light">/{REQUIRED_SESSIONS}</span>
+              <p className="text-xs text-gray-400 mt-1">ครั้ง</p>
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
-            <div 
-              className="bg-art-500 h-3 rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${(totalSessions / REQUIRED_SESSIONS) * 100}%` }}
+          {/* Progress bar */}
+          <div className="w-full bg-[#f5f5f7] rounded-full h-1.5 mb-3">
+            <div
+              className="h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${(totalSessions / REQUIRED_SESSIONS) * 100}%`, backgroundColor: ORANGE }}
             />
           </div>
-
-          {/* Status Message */}
-          {sessionsRemaining > 0 ? (
-            <p className="text-sm text-orange-600">
-              🔄 เลือกเพิ่มอีก {sessionsRemaining} ครั้งเพื่อครบ 1 คอร์ส
-            </p>
-          ) : (
-            <p className="text-sm text-green-600 flex items-center">
-              <CheckCircleIcon className="w-4 h-4 mr-1" />
-              ✅ เลือกครบแล้ว! พร้อมเพิ่มเข้าตะกร้า
-            </p>
-          )}
+          <p className="text-sm text-gray-500">
+            {canConfirm
+              ? 'เลือกครบแล้ว พร้อมเพิ่มเข้าตะกร้า'
+              : `เลือกเพิ่มอีก ${sessionsRemaining} ครั้ง เพื่อครบ 1 คอร์ส`}
+          </p>
         </div>
 
-        {/* Lesson Items */}
-        <div className="space-y-4 mb-8">
-          {COURSE_LESSON_ITEMS.map((item) => {
-            const selectedCount = selectedItems[item.product_id] || 0;
+        {/* Items */}
+        <div className="space-y-3 mb-12">
+          {items.map((item) => {
+            const count = selectedItems[item.product_id] || 0;
             const canAdd = totalSessions < REQUIRED_SESSIONS;
-            
+            const imageUrl = item.image_urls?.[0] ?? item.gallery?.mainImage?.url ?? null;
+            const showImage = imageUrl && !failedImages.has(item.product_id);
+
             return (
-              <div key={item.product_id} className="card hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {item.product_name}
-                    </h3>
-                    <p className="text-gray-600 mb-3">
-                      {item.description}
-                    </p>
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span>⏱ {item.duration_hours} ชั่วโมง</span>
-                      <span>👶 {item.age_min}-{item.age_max} ปี</span>
-                      <span className="font-semibold text-art-600">
-                        {formatPrice(item.price)}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    {/* Quantity Controls */}
-                    <button
-                      onClick={() => updateItemCount(item.product_id, -1)}
-                      disabled={selectedCount === 0}
-                      className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <MinusIcon className="w-4 h-4" />
-                    </button>
-                    
-                    <span className="text-xl font-semibold text-gray-900 w-8 text-center">
-                      {selectedCount}
-                    </span>
-                    
-                    <button
-                      onClick={() => updateItemCount(item.product_id, 1)}
-                      disabled={!canAdd && selectedCount === 0}
-                      className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <PlusIcon className="w-4 h-4" />
-                    </button>
-                  </div>
+              <div key={item.product_id} className="flex items-center gap-4 bg-[#f5f5f7] rounded-2xl p-4">
+                {/* Image */}
+                {showImage ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const imgs = item.image_urls?.length ? item.image_urls : [imageUrl!];
+                      setGallery({ images: imgs, index: 0 });
+                    }}
+                    className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-200 hover:opacity-90 transition-opacity"
+                  >
+                    <Image
+                      src={imageUrl!}
+                      alt={item.product_name}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                      onError={() => setFailedImages(prev => new Set([...prev, item.product_id]))}
+                    />
+                  </button>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl flex-shrink-0 bg-gray-200 flex items-center justify-center text-2xl">🎨</div>
+                )}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 text-sm leading-tight">{item.product_name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">{item.description}</p>
+                  <p className="text-xs font-medium mt-1" style={{ color: ORANGE }}>{formatPrice(item.price)}</p>
+                </div>
+
+                {/* Counter */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => updateItemCount(item.product_id, -1)}
+                    disabled={count === 0}
+                    className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 disabled:opacity-30 transition-opacity"
+                  >
+                    <MinusIcon className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="w-6 text-center text-sm font-semibold text-gray-900">{count}</span>
+                  <button
+                    onClick={() => updateItemCount(item.product_id, 1)}
+                    disabled={!canAdd}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white disabled:opacity-30 transition-opacity"
+                    style={{ backgroundColor: ORANGE }}
+                  >
+                    <PlusIcon className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Summary & Confirm */}
+        {/* Summary */}
         {totalSessions > 0 && (
-          <div className="card bg-gray-50 border-2 border-dashed border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              สรุปคอร์สที่เลือก
-            </h3>
-            
-            <div className="space-y-2 mb-4">
-              {Object.entries(selectedItems).map(([productId, quantity]) => {
-                const item = COURSE_LESSON_ITEMS.find(item => item.product_id === productId)!;
+          <div className="bg-[#f5f5f7] rounded-3xl p-6">
+            <p className="text-sm font-medium uppercase tracking-widest text-gray-400 mb-4">สรุปคอร์สที่เลือก</p>
+            <div className="space-y-2 mb-5">
+              {Object.entries(selectedItems).map(([productId, qty]) => {
+                const item = items.find(i => i.product_id === productId)!;
                 return (
                   <div key={productId} className="flex justify-between text-sm">
-                    <span>{item.product_name} x{quantity}</span>
-                    <span className="font-medium">{formatPrice(item.price * quantity)}</span>
+                    <span className="text-gray-700">{item.product_name} ×{qty}</span>
+                    <span className="font-medium text-gray-900">{formatPrice(item.price * qty)}</span>
                   </div>
                 );
               })}
             </div>
-            
-            <div className="border-t pt-4 flex justify-between items-center">
+            <div className="border-t border-gray-200 pt-4 flex items-center justify-between">
               <div>
-                <div className="text-lg font-bold text-gray-900">
-                  รวม: {formatPrice(totalPrice)}
-                </div>
-                <div className="text-sm text-gray-500">
-                  ทั้งหมด {totalSessions} ครั้ง ({totalSessions * 2} ชั่วโมง)
-                </div>
+                <p className="text-xl font-bold text-gray-900">{formatPrice(totalPrice)}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{totalSessions} ครั้ง · {totalSessions * 2} ชั่วโมง</p>
               </div>
-              
               <button
                 onClick={confirmCustomBundle}
                 disabled={!canConfirm || isSubmitting}
-                className={`px-8 py-3 rounded-lg font-semibold transition-all ${
-                  canConfirm 
-                    ? 'bg-art-500 hover:bg-art-600 text-white shadow-md hover:shadow-lg' 
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                className="text-white px-7 py-2.5 rounded-full text-sm font-medium transition-opacity disabled:opacity-40"
+                style={{ backgroundColor: ORANGE }}
               >
                 {isSubmitting ? 'กำลังเพิ่ม...' : 'เพิ่มเข้าตะกร้า'}
               </button>
@@ -284,16 +251,75 @@ export default function CustomCoursePage() {
           </div>
         )}
 
-        {/* Help Text */}
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="font-semibold text-blue-900 mb-2">💡 คำแนะนำ</h4>
-          <ul className="text-blue-800 text-sm space-y-1">
-            <li>• คุณสามารถเลือกวิชาเดิมซ้ำได้หากต้องการฝึกฝนเพิ่มเติม</li>
-            <li>• แต่ละครั้ง 2 ชั่วโมง เหมาะสำหรับการเรียนรู้ที่ไม่เหนื่อยล้า</li>
-            <li>• 1 คอร์ส = 5 ครั้ง สามารถจบได้ใน 2-3 สัปดาห์</li>
-          </ul>
+        {/* Tip */}
+        <div className="mt-8 border-t border-gray-100 pt-8">
+          <p className="text-xs text-gray-400 leading-relaxed">
+            เลือกวิชาเดิมซ้ำได้หากต้องการฝึกฝนเพิ่มเติม · แต่ละครั้ง 2 ชั่วโมง · 1 คอร์ส = 5 ครั้ง
+          </p>
         </div>
       </div>
+
+      {/* Gallery Modal */}
+      {gallery && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setGallery(null)}
+        >
+          <button
+            onClick={() => setGallery(null)}
+            className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+
+          {/* Prev */}
+          {gallery.images.length > 1 && gallery.index > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setGallery(g => g && { ...g, index: g.index - 1 }); }}
+              className="absolute left-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Main image */}
+          <div className="relative max-w-2xl w-full max-h-[80vh]" onClick={e => e.stopPropagation()}>
+            <img
+              src={gallery.images[gallery.index]}
+              alt={`รูป ${gallery.index + 1}`}
+              className="w-full h-full object-contain rounded-2xl max-h-[80vh]"
+            />
+            {gallery.images.length > 1 && (
+              <p className="text-center text-white/60 text-sm mt-3">{gallery.index + 1} / {gallery.images.length}</p>
+            )}
+          </div>
+
+          {/* Next */}
+          {gallery.images.length > 1 && gallery.index < gallery.images.length - 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setGallery(g => g && { ...g, index: g.index + 1 }); }}
+              className="absolute right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Thumbnails */}
+          {gallery.images.length > 1 && (
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 px-4" onClick={e => e.stopPropagation()}>
+              {gallery.images.map((url, i) => (
+                <button
+                  key={i}
+                  onClick={() => setGallery(g => g && { ...g, index: i })}
+                  className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${i === gallery.index ? 'border-white' : 'border-white/30 opacity-60'}`}
+                >
+                  <img src={url} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

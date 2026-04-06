@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["http://localhost:3000", "http://localhost:3001", "https://arthome-4fa5e.web.app", "https://arthome-4fa5e.firebaseapp.com"],
+    "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Authorization", "X-Requested-With", "Access-Control-Allow-Origin"]
+  }
+]

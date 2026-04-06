@@ -7,26 +7,21 @@ import Image from 'next/image';
 import { OrderService } from '@/lib/orderService';
 import { Order } from '@/types';
 import { formatPrice } from '@/lib/utils';
-import { 
-  CheckCircleIcon, 
-  DocumentDuplicateIcon
-} from '@heroicons/react/24/outline';
+import { CheckCircleIcon, DocumentDuplicateIcon, PrinterIcon } from '@heroicons/react/24/outline';
+
+const ORANGE = '#e15d15';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const referenceNo = searchParams.get('ref');
-  
+
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!referenceNo) {
-        setLoading(false);
-        return;
-      }
-
+      if (!referenceNo) { setLoading(false); return; }
       try {
         const orderData = await OrderService.getOrderByReference(referenceNo);
         setOrder(orderData);
@@ -36,7 +31,6 @@ function SuccessContent() {
         setLoading(false);
       }
     };
-
     fetchOrder();
   }, [referenceNo]);
 
@@ -48,266 +42,189 @@ function SuccessContent() {
     }
   };
 
+  const orderDate = order?.created_at
+    ? new Date(typeof order.created_at === 'string' ? order.created_at : (order.created_at as any).toDate?.() ?? order.created_at)
+    : new Date();
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-art-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
-        </div>
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: ORANGE, borderTopColor: 'transparent' }} />
       </div>
     );
   }
 
   if (!referenceNo || !order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-2xl">❌</span>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
-            ไม่พบข้อมูลการสั่งซื้อ
-          </h1>
-          <p className="text-gray-600 mb-8">
-            กรุณาตรวจสอบหมายเลขอ้างอิงหรือลองใหม่อีกครั้ง
-          </p>
-          <Link href="/" className="btn-primary">
-            กลับหน้าหลัก
-          </Link>
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">ไม่พบข้อมูลการสั่งซื้อ</p>
+          <Link href="/" className="text-white px-6 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: ORANGE }}>กลับหน้าหลัก</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <div className="container mx-auto px-4 max-w-3xl">
-        {/* Receipt Card */}
-        <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+    <div className="min-h-screen bg-[#f5f5f7] py-10 px-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+      <div className="max-w-md mx-auto">
+
+        {/* Receipt card */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+
+          {/* Top notch */}
+          <div className="flex">
+            {[...Array(18)].map((_, i) => (
+              <div key={i} className="flex-1 h-3" style={{ backgroundColor: i % 2 === 0 ? ORANGE : 'white' }} />
+            ))}
+          </div>
+
           {/* Header */}
-          <div className="bg-gradient-to-r from-art-500 to-orange-600 p-6 text-white">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-white rounded-full p-2">
-                  <Image
-                    src="/images/arthome_logo.jpg" 
-                    alt="23 Art Home Logo"
-                    width={60}
-                    height={60}
-                    className="w-full h-full object-contain rounded-full"
-                  />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold">23arthome studio&tutor</h1>
-                </div>
+          <div className="px-8 pt-8 pb-6 text-center border-b border-dashed border-gray-200">
+            <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4 shadow-sm">
+              <Image src="/images/arthome_logo.jpg" alt="23 Art Home" width={64} height={64} className="w-full h-full object-cover" />
+            </div>
+            <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-1">ใบเสร็จรับเงิน</p>
+            <h1 className="text-xl font-bold tracking-tight text-gray-900">23 Art Home Studio</h1>
+            <div className="flex items-center justify-center gap-1.5 mt-3">
+              <CheckCircleIcon className="w-4 h-4" style={{ color: ORANGE }} />
+              <span className="text-sm font-medium" style={{ color: ORANGE }}>สมัครเรียนสำเร็จ</span>
+            </div>
+          </div>
+
+          {/* Reference + Date */}
+          <div className="px-8 py-5 border-b border-dashed border-gray-200">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs text-gray-400 mb-0.5">เลขที่อ้างอิง</p>
+                <p className="text-sm font-mono font-bold text-gray-900">{order.reference_no}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-orange-100">เลขที่อ้างอิง</p>
-                <p className="text-lg font-mono font-bold">{order.reference_no}</p>
+                <p className="text-xs text-gray-400 mb-0.5">วันที่</p>
+                <p className="text-sm text-gray-700">
+                  {orderDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Studio Info */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">ข้อมูลสตูดิโอ</h3>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p><strong>คุณ อนุรักษ์ สุขนันทศักดิ์</strong></p>
-                  <p>77/1 บางแวก แขวงบางไผ่ เขตบางแค</p>
-                  <p>ซอยจรัญสนิทวงค์ 13</p>
-                  <p>ในทางเข้าหมู่บ้านธีรินทร์</p>
-                  <p>กรุงเทพ 10160</p>
-                  <div className="pt-2">
-                    <p>📞 085-042-4116, 081-536-4384</p>
-                    <p>📧 arthomestudio@hotmail.com</p>
-                    <p>📧 arthomestudio@gmail.com</p>
-                    <p>📍 LINE: AUM_ART_HOME</p>
-                  </div>
-                </div>
+          {/* Customer info */}
+          <div className="px-8 py-5 border-b border-dashed border-gray-200">
+            <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">ข้อมูลผู้สมัคร</p>
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">ผู้ปกครอง</span>
+                <span className="font-medium text-gray-900 text-right">{order.parent_name}</span>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">ใบเสร็จรับเงิน</h3>
-                <div className="text-sm text-gray-600">
-                  <p>วันที่: {new Date().toLocaleDateString('th-TH', {
-                    year: 'numeric',
-                    month: 'long', 
-                    day: 'numeric'
-                  })}</p>
-                  <div className="mt-3">
-                    <h4 className="font-semibold text-gray-900">ลูกค้า:</h4>
-                    <p>{order.parent_name}</p>
-                    <p>📞 {order.parent_phone}</p>
-                    {order.parent_line_id && <p>📱 {order.parent_line_id}</p>}
-                    <p><strong>นักเรียน:</strong> {order.student_name} (เพศ{order.student_gender}, อายุ {order.student_age} ปี)</p>
-                  </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">โทรศัพท์</span>
+                <span className="font-medium text-gray-900">{order.parent_phone}</span>
+              </div>
+              {order.parent_line_id && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">LINE</span>
+                  <span className="font-medium text-gray-900">{order.parent_line_id}</span>
                 </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-gray-500">นักเรียน</span>
+                <span className="font-medium text-gray-900">{order.student_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">อายุ / เพศ</span>
+                <span className="font-medium text-gray-900">{order.student_age} ปี · {order.student_gender}</span>
               </div>
             </div>
           </div>
 
-          {/* Course Details Table */}
-          <div className="p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">รายการคอร์สเรียน</h3>
-            
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">รายการ</th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">จำนวน</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">ราคา</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">รวม</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {order.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-4">
-                        <div>
-                          <p className="font-semibold text-gray-900">{item.name}</p>
-                          {item.item_type === 'custom_bundle' && item.bundle_detail && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {item.bundle_detail.selected_items.map((bundleItem, i) => (
-                                <div key={i}>• {bundleItem.product_name} × {bundleItem.quantity}</div>
-                              ))}
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500">
-                            {item.item_type === 'custom_bundle' 
-                              ? 'คอร์สจัดเอง 5 ครั้ง'
-                              : item.item_type === 'predefined_course' 
-                                ? 'คอร์สสำเร็จรูป' 
-                                : 'อุปกรณ์เพิ่มเติม'
-                            }
-                          </p>
+          {/* Items */}
+          <div className="px-8 py-5 border-b border-dashed border-gray-200">
+            <p className="text-xs font-medium uppercase tracking-widest text-gray-400 mb-3">รายการ</p>
+            <div className="space-y-3">
+              {order.items.map((item, i) => (
+                <div key={i}>
+                  <div className="flex justify-between items-start text-sm">
+                    <div className="flex-1 pr-4">
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      {item.item_type === 'custom_bundle' && item.bundle_detail && (
+                        <div className="mt-1 space-y-0.5">
+                          {item.bundle_detail.selected_items.map((b, j) => (
+                            <p key={j} className="text-xs text-gray-400">· {b.product_name} ×{b.quantity}</p>
+                          ))}
                         </div>
-                      </td>
-                      <td className="px-4 py-4 text-center text-sm text-gray-900">
-                        {item.quantity}
-                      </td>
-                      <td className="px-4 py-4 text-right text-sm text-gray-900">
-                        {formatPrice(item.unit_price)}
-                      </td>
-                      <td className="px-4 py-4 text-right font-semibold text-gray-900">
-                        {formatPrice(item.line_total)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <td colSpan={3} className="px-4 py-4 text-right font-bold text-gray-900">
-                      ยอดรวมทั้งสิ้น:
-                    </td>
-                    <td className="px-4 py-4 text-right font-bold text-xl text-art-600">
-                      {formatPrice(order.total_amount)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+                      )}
+                    </div>
+                    <p className="font-semibold text-gray-900 flex-shrink-0">{formatPrice(item.line_total)}</p>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
+          {/* Total */}
+          <div className="px-8 py-5 border-b border-dashed border-gray-200">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-500">ยอดรวมทั้งสิ้น</p>
+              <p className="text-2xl font-bold tracking-tight" style={{ color: ORANGE }}>{formatPrice(order.total_amount)}</p>
+            </div>
             {order.note && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800"><strong>หมายเหตุ:</strong> {order.note}</p>
-              </div>
+              <p className="mt-3 text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">หมายเหตุ: {order.note}</p>
             )}
           </div>
 
-          {/* Payment Status */}
-          <div className="px-6 py-4 bg-green-50 border-t border-green-200">
-            <div className="flex items-center justify-center space-x-2 text-green-800">
-              <CheckCircleIcon className="w-6 h-6" />
-              <p className="font-semibold text-lg">โอนชำระคอร์สเรียนเรียบร้อย</p>
+          {/* Next steps */}
+          <div className="px-8 py-6 border-b border-dashed border-gray-200 text-center">
+            <p className="text-sm font-semibold text-gray-900 mb-4">แอดไลน์ครูอ่ำเพื่อนัดเรียน</p>
+            <div className="bg-[#f5f5f7] rounded-2xl p-4 inline-block mb-3">
+              <Image src="/images/contact.jpg" alt="LINE QR ครูอ่ำ" width={160} height={160} className="w-40 h-40 mx-auto rounded-xl" />
+            </div>
+            <p className="text-sm font-medium text-gray-700">LINE: <span className="font-bold">AUM_ART_HOME</span></p>
+            <div className="mt-4 text-xs text-gray-400 space-y-1 text-left bg-[#f5f5f7] rounded-2xl px-4 py-3">
+              <p>1. แอดไลน์ครูอ่ำ (QR ด้านบน)</p>
+              <p>2. ส่งรูปหน้านี้เพื่อยืนยันการสมัคร</p>
+              <p>3. จัดตารางเรียนตามความสะดวก</p>
+              <p>4. เริ่มเรียนและสร้างสรรค์ผลงาน 🎨</p>
             </div>
           </div>
 
-          {/* Thank You Message */}
-          <div className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 border-t border-gray-200">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                🎉 ขอบคุณสำหรับการสมัครเรียน
-              </h3>
-              <p className="text-lg text-gray-700 mb-2">
-                สมัครแล้ว แอดไลน์ครูอ่ำได้เลยครับ
-              </p>
-            </div>
-
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8">
-              <div className="text-center">
-                <div className="bg-white p-4 rounded-2xl shadow-lg inline-block">
-                  <Image
-                    src="/images/contact.jpg"
-                    alt="LINE QR Code - Add ครูอ่ำ"
-                    width={200}
-                    height={200}
-                    className="w-48 h-48 mx-auto"
-                  />
-                </div>
-                <p className="mt-4 text-sm font-semibold text-gray-900">
-                  📱 สแกนเพื่อแอดไลน์ครูอ่ำ
-                </p>
-                <p className="text-xs text-gray-500">LINE: AUM_ART_HOME</p>
-              </div>
-
-              <div className="text-center space-y-3">
-                <div className="bg-white p-4 rounded-xl shadow-md">
-                  <h4 className="font-bold text-gray-900 mb-2">📍 แผนที่สตูดิโอ</h4>
-                  <a 
-                    href="https://maps.app.goo.gl/GnmSW47U39xsUAr76?g_st=ac"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 underline text-sm"
-                  >
-                    คลิกดูแผนที่ใน Google Maps
-                  </a>
-                </div>
-                
-                <div className="bg-white p-4 rounded-xl shadow-md">
-                  <h4 className="font-bold text-gray-900 mb-2">⏰ ขั้นตอนถัดไป</h4>
-                  <ul className="text-xs text-gray-600 text-left space-y-1">
-                    <li>1. แอดไลน์ครูอ่ำ (QR Code ด้านซ้าย)</li>
-                    <li>2. ส่งรูปหน้านี้แสดงการสมัคร</li>
-                    <li>3. จัดตารางเรียนตามสะดวก</li>
-                    <li>4. เริ่มเรียนและสร้างสรรค์ผลงาน! 🎨</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+          {/* Store info */}
+          <div className="px-8 py-5 text-center text-xs text-gray-400 space-y-0.5">
+            <p className="font-medium text-gray-500">คุณอนุรักษ์ สุขนันทศักดิ์</p>
+            <p>77/1 ซอยจรัญสนิทวงค์ 13 บางแค กรุงเทพฯ 10160</p>
+            <p>085-042-4116 · 081-536-4384</p>
           </div>
 
-          {/* Receipt Footer */}
-          <div className="p-4 bg-gray-800 text-white text-center text-xs">
-            <p>*** ใบเสร็จรับเงิน 23arthome studio&tutor ***</p>
-            <p>เก็บใบเสร็จนี้ไว้เป็นหลักฐานการชำระเงิน | Receipt #{order.reference_no}</p>
+          {/* Bottom notch */}
+          <div className="flex">
+            {[...Array(18)].map((_, i) => (
+              <div key={i} className="flex-1 h-3" style={{ backgroundColor: i % 2 === 0 ? ORANGE : 'white' }} />
+            ))}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 text-center space-y-4">
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={handleCopyReference}
-              className="btn-secondary"
-            >
-              <DocumentDuplicateIcon className="w-4 h-4 mr-2" />
-              {copied ? 'คัดลอกแล้ว' : 'คัดลอกเลขอ้างอิง'}
-            </button>
-            
-            <button
-              onClick={() => window.print()}
-              className="btn-secondary"
-            >
-              🖨️ ปริ้นใบเสร็จ
-            </button>
-            
-            <Link href="/" className="btn-primary">
-              🏠 กลับหน้าหลัก
-            </Link>
-          </div>
+        {/* Actions */}
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={handleCopyReference}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            <DocumentDuplicateIcon className="w-4 h-4" />
+            {copied ? 'คัดลอกแล้ว ✓' : 'คัดลอกเลขอ้างอิง'}
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white rounded-full text-sm font-medium text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            <PrinterIcon className="w-4 h-4" />
+            พิมพ์ใบเสร็จ
+          </button>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-medium text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: ORANGE }}
+          >
+            กลับหน้าหลัก
+          </Link>
         </div>
       </div>
     </div>
@@ -317,11 +234,8 @@ function SuccessContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-art-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
-        </div>
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: ORANGE, borderTopColor: 'transparent' }} />
       </div>
     }>
       <SuccessContent />

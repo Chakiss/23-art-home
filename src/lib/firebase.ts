@@ -1,22 +1,55 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, initializeFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
+import { getStorage, connectStorageEmulator } from 'firebase/storage';
+
+// Load environment variables for Node.js scripts
+if (typeof window === 'undefined' && typeof require !== 'undefined') {
+  try {
+    require('dotenv').config({ path: '.env.local' });
+  } catch (error) {
+    console.warn('dotenv not available');
+  }
+}
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyC1yDWgeQ7fIkTIsb8ijiNYIi0u-qxI-60",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "arthome-4fa5e.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "arthome-4fa5e", 
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "arthome-4fa5e.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "607801946954",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:607801946954:web:abce16d2edd43256ce87b3",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-P45D2J8HGL",
 };
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialize Firebase only once
+let app: FirebaseApp;
+let db: Firestore;
 
-// Initialize Firestore
-export const db = getFirestore(app);
+if (getApps().length === 0) {
+  console.log('🔥 Initializing Firebase app...');
+  app = initializeApp(firebaseConfig);
+} else {
+  console.log('🔥 Using existing Firebase app');
+  app = getApps()[0];
+}
+
+// Initialize Firestore with better error handling
+try {
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: true,
+  });
+  console.log('✅ Firestore initialized successfully');
+} catch (error) {
+  console.error('❌ Firestore initialization failed:', error);
+  throw error;
+}
+
+// Initialize Storage
+export const storage = getStorage(app);
+
+// Note: For CORS issues in development, please configure CORS in Firebase Console
+console.log('📦 Firebase Storage initialized');
 
 // Initialize Analytics (only in browser and if supported)
 export const analytics = async () => {
@@ -26,4 +59,5 @@ export const analytics = async () => {
   return null;
 };
 
+export { db };
 export default app;

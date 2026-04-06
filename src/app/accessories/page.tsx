@@ -2,99 +2,82 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ART_SUPPLY_PRODUCTS } from '@/types';
 import { useCart } from '@/hooks/useCart';
+import { useAccessories } from '@/hooks/useCourseData';
+import { useIsMounted } from '@/hooks/useIsMounted';
 import { trackEvent, formatPrice } from '@/lib/utils';
-import { 
-  ArrowLeftIcon, 
-  ShoppingCartIcon,
-  CheckCircleIcon,
-  PlusIcon,
-  SparklesIcon
-} from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ShoppingCartIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+
+const ORANGE = '#e15d15';
 
 export default function AccessoriesPage() {
   const router = useRouter();
   const { addItem, getItemCount } = useCart();
-  const cartItemCount = getItemCount();
-  
+  const { accessories, loading, error } = useAccessories();
+  const isMounted = useIsMounted();
+  const cartItemCount = isMounted ? getItemCount() : 0;
   const [addingItems, setAddingItems] = useState<Set<string>>(new Set());
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
-  const handleAddToCart = useCallback(async (product: typeof ART_SUPPLY_PRODUCTS[0], quantity: number = 1) => {
+  const handleAddToCart = useCallback(async (product: (typeof accessories)[0]) => {
     setAddingItems(prev => new Set([...prev, product.product_id]));
-    
-    try {
-      addItem({
-        product_id: product.product_id,
-        name: product.product_name,
-        price: product.price,
-        type: 'accessory',
-        quantity,
-      });
-
-      trackEvent('add_to_cart', {
-        item_type: 'accessory',
-        item_name: product.product_name,
-        price: product.price,
-        quantity,
-        category: product.category_name,
-      });
-
-      // Show success feedback
-      setTimeout(() => {
-        setAddingItems(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(product.product_id);
-          return newSet;
-        });
-      }, 1000);
-    } catch (error) {
-      console.error('Error adding to cart:', error);
-      setAddingItems(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(product.product_id);
-        return newSet;
-      });
-    }
+    addItem({ product_id: product.product_id, name: product.product_name, price: product.price, type: 'accessory', quantity: 1 });
+    trackEvent('add_to_cart', { item_type: 'accessory', item_name: product.product_name, price: product.price });
+    setTimeout(() => {
+      setAddingItems(prev => { const s = new Set(prev); s.delete(product.product_id); return s; });
+    }, 1000);
   }, [addItem]);
 
-  const handleQuickOrder = useCallback((product: typeof ART_SUPPLY_PRODUCTS[0]) => {
+  const handleQuickOrder = useCallback((product: (typeof accessories)[0]) => {
     handleAddToCart(product);
-    setTimeout(() => {
-      router.push('/cart');
-    }, 1200);
+    setTimeout(() => router.push('/cart'), 1200);
   }, [handleAddToCart, router]);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link 
-              href="/"
-              className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeftIcon className="w-6 h-6" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                อุปกรณ์เพิ่มเติม
-              </h1>
-              <p className="text-sm text-gray-500">
-                กระเป๋าศิลปะและอุปกรณ์
-              </p>
-            </div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="max-w-4xl mx-auto px-6 py-24">
+          <div className="space-y-4 animate-pulse">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-48 bg-[#f5f5f7] rounded-3xl" />
+            ))}
           </div>
-          
-          <Link 
-            href="/cart" 
-            className="relative p-2 text-gray-600 hover:text-art-500 transition-colors"
-          >
-            <ShoppingCartIcon className="w-6 h-6" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="text-white px-6 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: ORANGE }}>
+            ลองใหม่
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+
+      {/* Nav */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
+        <div className="max-w-4xl mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Link href="/" className="text-gray-500 hover:text-black transition-colors">
+              <ArrowLeftIcon className="w-5 h-5" />
+            </Link>
+            <span className="text-base font-semibold tracking-tight">อุปกรณ์เพิ่มเติม</span>
+          </div>
+          <Link href="/cart" className="relative p-1.5 text-gray-600 hover:text-black transition-colors">
+            <ShoppingCartIcon className="w-5 h-5" />
             {cartItemCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-art-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium">
+              <span className="absolute -top-0.5 -right-0.5 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium leading-none" style={{ backgroundColor: ORANGE }}>
                 {cartItemCount}
               </span>
             )}
@@ -102,125 +85,80 @@ export default function AccessoriesPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-art-100 rounded-full mb-6">
-            <span className="text-3xl">🎒</span>
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+      {/* Hero */}
+      <section className="bg-[#f5f5f7] py-16 px-6 text-center">
+        <div className="max-w-xl mx-auto">
+          <p className="text-sm font-medium uppercase tracking-widest mb-3" style={{ color: ORANGE }}>อุปกรณ์ศิลปะ</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 mb-4">
             อุปกรณ์ศิลปะครบชุด
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          </h1>
+          <p className="text-lg text-gray-500 font-light">
             กระเป๋าศิลปะพร้อมอุปกรณ์คุณภาพสูง สำหรับน้องที่รักการวาดรูป
-            <br />
-            สามารถซื้อเพิ่มได้ไม่จำเป็นต้องซื้อคู่กับคอร์ส
           </p>
         </div>
+      </section>
 
-        {/* Product Section */}
-        <div className="space-y-8">
-          {ART_SUPPLY_PRODUCTS.map((product) => {
+      {/* Products */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto space-y-5">
+          {accessories.map((product) => {
             const isAdding = addingItems.has(product.product_id);
-            
+            const imageUrls = (product.image_urls ?? (product.gallery?.mainImage ? [product.gallery.mainImage.url] : []))
+              .filter(url => !failedImages.has(url));
+
             return (
-              <div key={product.product_id} className="card hover:shadow-xl transition-all duration-300">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-8">
-                  {/* Product Image Placeholder */}
-                  <div className="lg:w-1/3">
-                    <div className="aspect-square bg-gradient-to-br from-art-100 to-art-200 rounded-xl flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-6xl mb-4">🎨</div>
-                        <div className="text-lg font-semibold text-art-700">กระเป๋าศิลปะ</div>
-                        <div className="text-sm text-art-600">พร้อมอุปกรณ์</div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Product Details */}
-                  <div className="lg:w-2/3">
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="text-2xl font-bold text-gray-900">
-                        {product.product_name}
-                      </h3>
-                      <div className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                        <SparklesIcon className="w-4 h-4 mr-1" />
-                        Premium
-                      </div>
-                    </div>
-                    
-                    <p className="text-gray-600 mb-6 text-lg">
-                      {product.description}
-                    </p>
-                    
-                    {/* What's Included */}
-                    <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                      <h4 className="font-semibold text-gray-900 mb-4">📦 สิ่งที่ได้รับ</h4>
-                      <div className="grid md:grid-cols-2 gap-3">
-                        {[
-                          '🎒 กระเป๋าผ้าแคนวาส คุณภาพสูง',
-                          '🖍️ สีเทียน 24 สี',
-                          '🖊️ ดินสอสี 12 สี (กันน้ำ)',
-                          '✏️ ดินสอ HB, 2B (2 แท่ง)',
-                          '🧹 ยางลบคุณภาพดี',
-                          '📏 ไม้บรรทัด 15 ซม.',
-                          '📄 กระดาษเดรสสี A4 (10 แผ่น)',
-                          '🎨 พู่กันขนาดต่างๆ (3 ชิ้น)'
-                        ].map((item, index) => (
-                          <div key={index} className="flex items-center text-sm text-gray-700">
-                            <span>{item}</span>
+              <div key={product.product_id} className="bg-[#f5f5f7] rounded-3xl overflow-hidden">
+                <div className="flex flex-col md:flex-row">
+                  {/* Images */}
+                  <div className="md:w-80 flex-shrink-0">
+                    {imageUrls.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-0.5 h-64 md:h-full">
+                        {imageUrls.slice(0, 4).map((url, i) => (
+                          <div key={i} className={`relative bg-gray-200 ${imageUrls.length === 1 ? 'col-span-2 row-span-2' : ''}`}>
+                            <Image
+                              src={url}
+                              alt={`${product.product_name} ${i + 1}`}
+                              fill
+                              className="object-cover"
+                              onError={() => setFailedImages(prev => new Set([...prev, url]))}
+                            />
                           </div>
                         ))}
                       </div>
-                      
-                      {/* Note */}
-                      <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-800">
-                          <strong>หมายเหตุ:</strong> อุปกรณ์นี้เป็นเพียงอุปกรณ์พื้นฐาน จัดเตรียมไว้ใน1ชุด หากประสงค์ใช้อุปกรณ์อื่นๆ กรุณาจัดเตรียมมาเพิ่มเติมตามความเหมาะสม
-                        </p>
-                      </div>
+                    ) : (
+                      <div className="h-64 md:h-full bg-gray-200 flex items-center justify-center text-5xl">🎒</div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 p-8 flex flex-col justify-between">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-widest mb-2" style={{ color: ORANGE }}>{product.category_name}</p>
+                      <h3 className="text-2xl font-bold tracking-tight text-gray-900 mb-3">{product.product_name}</h3>
+                      <p className="text-gray-500 leading-relaxed mb-6">{product.description}</p>
+
+                      {product.age_min && (
+                        <p className="text-xs text-gray-400 mb-6">เหมาะสำหรับอายุ {product.age_min}–{product.age_max} ปี</p>
+                      )}
                     </div>
-                    
-                    {/* Price and Actions */}
+
                     <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-3xl font-bold text-art-600 mb-1">
-                          {formatPrice(product.price)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          ราคาพิเศษสำหรับนักเรียน 23 Art Home
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => handleAddToCart(product)}
-                          disabled={isAdding}
-                          className={`py-3 px-6 rounded-lg font-semibold transition-all ${
-                            isAdding
-                              ? 'bg-green-500 text-white'
-                              : 'bg-art-500 hover:bg-art-600 text-white hover:shadow-lg'
-                          }`}
-                        >
-                          {isAdding ? (
-                            <span className="flex items-center">
-                              <CheckCircleIcon className="w-5 h-5 mr-2" />
-                              เพิ่มแล้ว!
-                            </span>
-                          ) : (
-                            <span className="flex items-center">
-                              <PlusIcon className="w-5 h-5 mr-2" />
-                              เพิ่มเข้าตะกร้า
-                            </span>
-                          )}
-                        </button>
-                        
+                      <p className="text-3xl font-bold text-gray-900">{formatPrice(product.price)}</p>
+                      <div className="flex gap-2">
                         <button
                           onClick={() => handleQuickOrder(product)}
                           disabled={isAdding}
-                          className="py-3 px-6 rounded-lg font-semibold bg-white text-art-600 border-2 border-art-200 hover:border-art-300 hover:bg-art-50 transition-all disabled:opacity-50"
+                          className="text-sm font-medium px-5 py-2.5 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40"
                         >
                           สั่งเลย
+                        </button>
+                        <button
+                          onClick={() => handleAddToCart(product)}
+                          disabled={isAdding}
+                          className="text-sm font-medium px-5 py-2.5 rounded-full text-white transition-opacity hover:opacity-90 disabled:opacity-40 flex items-center gap-1.5"
+                          style={{ backgroundColor: ORANGE }}
+                        >
+                          {isAdding ? <><CheckCircleIcon className="w-4 h-4" />เพิ่มแล้ว</> : '+ ตะกร้า'}
                         </button>
                       </div>
                     </div>
@@ -230,67 +168,39 @@ export default function AccessoriesPage() {
             );
           })}
         </div>
+      </section>
 
-        {/* Benefits Section */}
-        <div className="mt-16 p-8 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            ✨ ทำไมต้องมีกระเป๋าศิลปะของตัวเอง
-          </h3>
-          
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🏡</span>
+      {/* Features */}
+      <section className="py-12 px-6 bg-[#f5f5f7]">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-3 gap-px bg-gray-200 rounded-2xl overflow-hidden">
+            {[
+              { icon: '🏡', title: 'ฝึกที่บ้านได้', desc: 'นำกลับไปฝึกต่อที่บ้านได้เลย' },
+              { icon: '🧼', title: 'ปลอดภัย', desc: 'อุปกรณ์สะอาดและปลอดภัยสำหรับเด็ก' },
+              { icon: '💝', title: 'ของขวัญสุดพิเศษ', desc: 'เหมาะเป็นของขวัญสำหรับเด็ก' },
+            ].map((f, i) => (
+              <div key={i} className="bg-white p-6 text-center">
+                <div className="text-2xl mb-3">{f.icon}</div>
+                <p className="text-sm font-semibold text-gray-900 mb-1">{f.title}</p>
+                <p className="text-xs text-gray-500">{f.desc}</p>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">ฝึกฝนที่บ้าน</h4>
-              <p className="text-gray-600 text-sm">
-                น้องสามารถนำกลับไปฝึกฝนที่บ้านได้
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">🧼</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">สะอาดปลอดภัย</h4>
-              <p className="text-gray-600 text-sm">
-                อุปกรณ์ของตัวเองสะอาดและปลอดภัย
-              </p>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💝</span>
-              </div>
-              <h4 className="font-semibold text-gray-900 mb-2">ของขวัญสุดพิเศษ</h4>
-              <p className="text-gray-600 text-sm">
-                เป็นของขวัญที่มีคุณค่าสำหรับเด็ก
-              </p>
-            </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* CTA Section */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-6">
-            ชุดอุปกรณ์นี้เหมาะสำหรับใช้คู่กับคอร์สเรียนทุกชนิด
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/custom-course"
-              className="btn-secondary"
-            >
-              จัดคอร์สเอง 5 ครั้ง
-            </Link>
-            <Link 
-              href="/predefined-courses"
-              className="btn-secondary"
-            >
-              คอร์สสำเร็จรูป
-            </Link>
-          </div>
+      {/* Bottom CTA */}
+      <section className="py-16 px-6 text-center">
+        <p className="text-gray-500 text-sm mb-5">ชุดอุปกรณ์นี้เหมาะสำหรับใช้คู่กับคอร์สเรียนทุกชนิด</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/custom-course" className="inline-flex items-center justify-center bg-white text-gray-900 border border-gray-300 px-7 py-2.5 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors">
+            จัดคอร์สเอง 5 ครั้ง
+          </Link>
+          <Link href="/predefined-courses" className="inline-flex items-center justify-center bg-white text-gray-900 border border-gray-300 px-7 py-2.5 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors">
+            คอร์สสำเร็จรูป
+          </Link>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

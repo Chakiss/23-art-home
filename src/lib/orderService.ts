@@ -18,11 +18,11 @@ const ORDERS_COLLECTION = 'orders';
 
 export class OrderService {
   // Submit a new order
-  static async submitOrder(cart: Cart, formData: CheckoutFormData): Promise<{ success: boolean; order?: Order; error?: string }> {
+  static async submitOrder(cart: Cart, formData: CheckoutFormData, slipUrl?: string): Promise<{ success: boolean; order?: Order; error?: string }> {
     try {
       const orderId = generateId();
       const referenceNo = generateReferenceNumber();
-      
+
       const order: Order = {
         order_id: orderId,
         reference_no: referenceNo,
@@ -36,6 +36,7 @@ export class OrderService {
         items: cart.items,
         total_amount: cart.total_amount,
         status: 'submitted',
+        ...(slipUrl && { slip_url: slipUrl }),
         created_at: new Date().toISOString(),
       };
 
