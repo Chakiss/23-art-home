@@ -81,9 +81,14 @@ export class AdminService {
     });
   }
 
+  // Generate a new document id ahead of time (for atomic create-with-images flow)
+  static newItemId(collectionName: string): string {
+    return doc(collection(db, collectionName)).id;
+  }
+
   // Create new item
   static async createItem(
-    collectionName: string, 
+    collectionName: string,
     data: Omit<AdminCourseItem, 'id' | 'created_at' | 'updated_at'>
   ): Promise<string> {
     return this.withRetry(async () => {
@@ -94,16 +99,40 @@ export class AdminService {
           created_at: serverTimestamp(),
           updated_at: serverTimestamp()
         };
-        
+
         await setDoc(docRef, itemData);
         return docRef.id;
       } catch (error: any) {
         console.error(`Error creating item in ${collectionName}:`, error);
-        
+
         if (error.code === 'permission-denied') {
           throw new Error('ไม่มีสิทธิ์ในการสร้างข้อมูลใหม่');
         }
-        
+
+        throw new Error(`ไม่สามารถสร้างรายการใหม่ได้: ${error.message}`);
+      }
+    });
+  }
+
+  // Create item with a pre-generated id (so images can be uploaded under that id first)
+  static async createItemWithId(
+    collectionName: string,
+    itemId: string,
+    data: Omit<AdminCourseItem, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<void> {
+    return this.withRetry(async () => {
+      try {
+        const docRef = doc(db, collectionName, itemId);
+        await setDoc(docRef, {
+          ...data,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        });
+      } catch (error: any) {
+        console.error(`Error creating item ${itemId} in ${collectionName}:`, error);
+        if (error.code === 'permission-denied') {
+          throw new Error('ไม่มีสิทธิ์ในการสร้างข้อมูลใหม่');
+        }
         throw new Error(`ไม่สามารถสร้างรายการใหม่ได้: ${error.message}`);
       }
     });

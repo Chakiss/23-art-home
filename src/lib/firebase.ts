@@ -27,29 +27,21 @@ let app: FirebaseApp;
 let db: Firestore;
 
 if (getApps().length === 0) {
-  console.log('🔥 Initializing Firebase app...');
   app = initializeApp(firebaseConfig);
 } else {
-  console.log('🔥 Using existing Firebase app');
   app = getApps()[0];
 }
 
-// Initialize Firestore with better error handling
 try {
   db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
   });
-  console.log('✅ Firestore initialized successfully');
 } catch (error) {
-  console.error('❌ Firestore initialization failed:', error);
+  console.error('Firestore initialization failed:', error);
   throw error;
 }
 
-// Initialize Storage
 export const storage = getStorage(app);
-
-// Note: For CORS issues in development, please configure CORS in Firebase Console
-console.log('📦 Firebase Storage initialized');
 
 // Initialize Analytics (only in browser and if supported)
 export const analytics = async () => {

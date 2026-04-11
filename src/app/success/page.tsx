@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { OrderService } from '@/lib/orderService';
 import { Order } from '@/types';
 import { formatPrice } from '@/lib/utils';
+import { toDate } from '@/lib/timestamps';
 import { CheckCircleIcon, DocumentDuplicateIcon, PrinterIcon } from '@heroicons/react/24/outline';
 
 const ORANGE = '#e15d15';
@@ -42,9 +43,7 @@ function SuccessContent() {
     }
   };
 
-  const orderDate = order?.created_at
-    ? new Date(typeof order.created_at === 'string' ? order.created_at : (order.created_at as any).toDate?.() ?? order.created_at)
-    : new Date();
+  const orderDate = toDate(order?.created_at);
 
   if (loading) {
     return (

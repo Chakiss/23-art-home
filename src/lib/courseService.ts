@@ -238,7 +238,6 @@ export class CourseService {
       });
 
       await batch.commit();
-      console.log('Batch import completed successfully');
     } catch (error) {
       console.error('Error during batch import:', error);
       throw error;

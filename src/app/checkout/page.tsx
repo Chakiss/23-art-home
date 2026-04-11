@@ -42,13 +42,6 @@ export default function CheckoutPage() {
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [isUploadingSlip, setIsUploadingSlip] = useState(false);
 
-  // Redirect if cart is empty - only on client side
-  // useEffect(() => {
-  //   if (cart.items.length === 0) {
-  //     router.push('/');
-  //   }
-  // }, [cart.items.length, router]);
-
   // Cleanup slip preview URL on unmount
   useEffect(() => {
     return () => {
