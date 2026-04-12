@@ -47,7 +47,7 @@ function SuccessContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: ORANGE, borderTopColor: 'transparent' }} />
       </div>
     );
@@ -55,7 +55,7 @@ function SuccessContent() {
 
   if (!referenceNo || !order) {
     return (
-      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 mb-4">ไม่พบข้อมูลการสั่งซื้อ</p>
           <Link href="/" className="text-white px-6 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: ORANGE }}>กลับหน้าหลัก</Link>
@@ -65,7 +65,7 @@ function SuccessContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] py-10 px-4" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+    <div className="min-h-screen bg-[#f5f5f7] py-10 px-4">
       <div className="max-w-md mx-auto">
 
         {/* Receipt card */}

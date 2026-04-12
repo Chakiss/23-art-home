@@ -1,22 +1,23 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/hooks/useCart';
 import { trackEvent, formatPrice } from '@/lib/utils';
-import { 
-  ArrowLeftIcon, 
+import {
   TrashIcon,
   PlusIcon,
   MinusIcon,
-  ShoppingBagIcon
+  ShoppingBagIcon,
+  ArrowRightIcon,
 } from '@heroicons/react/24/outline';
+import { Button, Badge, useToast } from '@/components/ui';
+import { NavBar } from '@/components/layout/NavBar';
 
 export default function CartPage() {
   const router = useRouter();
   const { cart, removeItem, updateItemQuantity, clearCart } = useCart();
-  const [isClearing, setIsClearing] = useState(false);
+  const { showToast } = useToast();
 
   const handleQuantityChange = (cartItemId: string, newQuantity: number) => {
     updateItemQuantity(cartItemId, newQuantity);
@@ -25,84 +26,57 @@ export default function CartPage() {
   const handleRemoveItem = (cartItemId: string, itemName: string) => {
     if (confirm(`ต้องการลบ "${itemName}" ออกจากตะกร้าใช่หรือไม่?`)) {
       removeItem(cartItemId);
-      trackEvent('remove_from_cart', {
-        item_name: itemName,
-        cart_value: cart.total_amount,
-      });
+      trackEvent('remove_from_cart', { item_name: itemName, cart_value: cart.total_amount });
+      showToast('ลบรายการออกจากตะกร้าแล้ว', 'info');
     }
   };
 
   const handleClearCart = () => {
     if (confirm('ต้องการลบสินค้าทั้งหมดในตะกร้าใช่หรือไม่?')) {
-      setIsClearing(true);
-      setTimeout(() => {
-        clearCart();
-        setIsClearing(false);
-      }, 500);
+      clearCart();
+      showToast('ล้างตะกร้าแล้ว', 'info');
     }
   };
 
   const handleCheckout = () => {
     if (cart.items.length === 0) return;
-
     trackEvent('checkout_start', {
       cart_value: cart.total_amount,
       items_count: cart.items.length,
     });
-
     router.push('/checkout');
   };
 
   if (cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-white shadow-sm">
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Link 
-                href="/"
-                className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ArrowLeftIcon className="w-6 h-6" />
-              </Link>
-              <h1 className="text-xl font-semibold text-gray-900">
-                ตะกร้าคอร์สเรียนของคุณ
-              </h1>
-            </div>
-          </div>
-        </header>
+      <div className="min-h-screen bg-white">
+        <NavBar backHref="/" backLabel="หน้าหลัก" />
 
-        {/* Empty Cart */}
-        <div className="container mx-auto px-4 py-16 max-w-2xl text-center">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-8">
-            <ShoppingBagIcon className="w-12 h-12 text-gray-400" />
+        <div className="max-w-2xl mx-auto px-6 py-20 text-center">
+          <div className="w-24 h-24 bg-[#f5f5f7] rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShoppingBagIcon className="w-12 h-12 text-gray-300" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-3">
             ตะกร้าว่างเปล่า
           </h2>
-          <p className="text-gray-600 mb-8">
-            ยังไม่มีคอร์สในตะกร้า เริ่มเลือกคอร์สที่น้องชอบกันเลย!
+          <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+            ยังไม่มีคอร์สในตะกร้า เริ่มเลือกคอร์สที่น้องชอบกันเลย
           </p>
-          
-          <div className="grid gap-4">
-            <Link 
-              href="/custom-course"
-              className="btn-primary"
-            >
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button href="/custom-course" size="md" trailingIcon={<ArrowRightIcon className="w-4 h-4" />}>
               จัดคอร์สเอง 5 ครั้ง
-            </Link>
-            <Link 
-              href="/predefined-courses"
-              className="btn-secondary"
-            >
-              เลือกคอร์สสำเร็จรูป
-            </Link>
-            <Link 
+            </Button>
+            <Button href="/predefined-courses" variant="secondary" size="md">
+              คอร์สสำเร็จรูป
+            </Button>
+          </div>
+          <div className="mt-5">
+            <Link
               href="/accessories"
-              className="text-art-600 hover:text-art-700 font-medium transition-colors"
+              className="text-sm text-art-600 hover:text-art-700 font-medium transition-colors"
             >
-              หรือดูอุปกรณ์เพิ่มเติม
+              หรือดูอุปกรณ์เพิ่มเติม →
             </Link>
           </div>
         </div>
@@ -111,118 +85,96 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link 
-              href="/"
-              className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <ArrowLeftIcon className="w-6 h-6" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                ตะกร้าคอร์สเรียนของคุณ
-              </h1>
-              <p className="text-sm text-gray-500">
-                {cart.items.length} รายการ
-              </p>
-            </div>
-          </div>
-          
-          {cart.items.length > 0 && (
-            <button
-              onClick={handleClearCart}
-              disabled={isClearing}
-              className="text-sm text-red-600 hover:text-red-700 font-medium transition-colors disabled:opacity-50"
-            >
-              {isClearing ? 'กำลังลบ...' : 'ลบทั้งหมด'}
-            </button>
-          )}
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#f5f5f7]">
+      <NavBar backHref="/" backLabel="หน้าหลัก" />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              รายการที่เลือก
-            </h2>
-            
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
+              ตะกร้าของคุณ
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">{cart.items.length} รายการ</p>
+          </div>
+          <button
+            onClick={handleClearCart}
+            className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
+          >
+            ลบทั้งหมด
+          </button>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-3">
             {cart.items.map((item) => (
-              <div key={item.cart_item_id} className="card">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <div
+                key={item.cart_item_id}
+                className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="mb-2">
+                      {item.item_type === 'custom_bundle' && <Badge tone="brand">คอร์สจัดเอง</Badge>}
+                      {item.item_type === 'predefined_course' && <Badge tone="info">คอร์สสำเร็จรูป</Badge>}
+                      {item.item_type === 'accessory' && <Badge tone="success">อุปกรณ์เพิ่มเติม</Badge>}
+                    </div>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 leading-tight">
                       {item.name}
                     </h3>
-                    
-                    {/* Custom Bundle Details */}
+
                     {item.item_type === 'custom_bundle' && item.bundle_detail && (
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 mb-2">รายละเอียดคอร์สที่เลือก:</p>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          {item.bundle_detail.selected_items.map((bundleItem, index) => (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>{bundleItem.product_name} x{bundleItem.quantity}</span>
-                              <span className="font-medium">{formatPrice(bundleItem.line_total)}</span>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="mb-3 bg-[#f5f5f7] rounded-xl p-3">
+                        <p className="text-xs text-gray-500 mb-1.5">รายละเอียด:</p>
+                        {item.bundle_detail.selected_items.map((bundleItem, index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between text-xs text-gray-700 py-0.5"
+                          >
+                            <span className="truncate pr-2">
+                              {bundleItem.product_name} x{bundleItem.quantity}
+                            </span>
+                            <span className="font-medium flex-shrink-0">
+                              {formatPrice(bundleItem.line_total)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     )}
-                    
-                    {/* Course Type Badge */}
-                    <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-3">
-                      {item.item_type === 'custom_bundle' && (
-                        <span className="bg-purple-100 text-purple-800">คอร์สจัดเอง</span>
-                      )}
-                      {item.item_type === 'predefined_course' && (
-                        <span className="bg-blue-100 text-blue-800">คอร์สสำเร็จรูป</span>
-                      )}
-                      {item.item_type === 'accessory' && (
-                        <span className="bg-green-100 text-green-800">อุปกรณ์เพิ่มเติม</span>
-                      )}
-                    </div>
-                    
-                    <div className="text-xl font-bold text-art-600">
+
+                    <p className="text-lg sm:text-xl font-bold text-art-600">
                       {formatPrice(item.line_total)}
-                    </div>
+                    </p>
                   </div>
-                  
-                  <div className="ml-4 flex flex-col items-end space-y-3">
-                    {/* Quantity Controls (only for non-bundle items) */}
+
+                  <div className="flex flex-col items-end gap-3 flex-shrink-0">
                     {item.item_type !== 'custom_bundle' && (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-1 bg-[#f5f5f7] rounded-full p-1">
                         <button
                           onClick={() => handleQuantityChange(item.cart_item_id, item.quantity - 1)}
-                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-colors"
+                          className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 hover:text-art-600 transition-colors"
+                          aria-label="ลดจำนวน"
                         >
-                          <MinusIcon className="w-4 h-4" />
+                          <MinusIcon className="w-3.5 h-3.5" />
                         </button>
-                        
-                        <span className="text-lg font-semibold text-gray-900 w-8 text-center">
+                        <span className="text-sm font-semibold text-gray-900 w-7 text-center">
                           {item.quantity}
                         </span>
-                        
                         <button
                           onClick={() => handleQuantityChange(item.cart_item_id, item.quantity + 1)}
-                          className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-colors"
+                          className="w-7 h-7 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 hover:text-art-600 transition-colors"
+                          aria-label="เพิ่มจำนวน"
                         >
-                          <PlusIcon className="w-4 h-4" />
+                          <PlusIcon className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     )}
-                    
-                    {/* Remove Button */}
+
                     <button
                       onClick={() => handleRemoveItem(item.cart_item_id, item.name)}
-                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      aria-label="ลบรายการ"
                     >
-                      <TrashIcon className="w-5 h-5" />
+                      <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -230,43 +182,48 @@ export default function CartPage() {
             ))}
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="card sticky top-24">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">
-                สรุปออเดอร์
-              </h3>
-              
-              <div className="space-y-3 mb-6">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm sticky top-20">
+              <h3 className="text-lg font-bold text-gray-900 tracking-tight mb-5">สรุปออเดอร์</h3>
+
+              <div className="space-y-2 mb-5 text-sm max-h-60 overflow-y-auto">
                 {cart.items.map((item) => (
-                  <div key={item.cart_item_id} className="flex justify-between text-sm">
-                    <span className="flex-1 truncate pr-2">
+                  <div key={item.cart_item_id} className="flex justify-between gap-2">
+                    <span className="flex-1 truncate text-gray-600">
                       {item.name}
-                      {item.quantity > 1 && ` x${item.quantity}`}
+                      {item.quantity > 1 && (
+                        <span className="text-gray-400"> x{item.quantity}</span>
+                      )}
                     </span>
-                    <span className="font-medium">{formatPrice(item.line_total)}</span>
+                    <span className="font-medium text-gray-900 flex-shrink-0">
+                      {formatPrice(item.line_total)}
+                    </span>
                   </div>
                 ))}
               </div>
-              
-              <div className="border-t pt-4 mb-6">
-                <div className="flex justify-between text-xl font-bold text-gray-900">
-                  <span>รวมทั้งสิ้น</span>
-                  <span className="text-art-600">{formatPrice(cart.total_amount)}</span>
+
+              <div className="border-t border-gray-100 pt-4 mb-5">
+                <div className="flex justify-between items-end">
+                  <span className="text-sm text-gray-500">รวมทั้งสิ้น</span>
+                  <span className="text-2xl font-bold text-art-600">
+                    {formatPrice(cart.total_amount)}
+                  </span>
                 </div>
               </div>
-              
-              <button
+
+              <Button
                 onClick={handleCheckout}
-                className="w-full btn-primary text-lg py-4"
+                size="lg"
+                className="w-full"
+                trailingIcon={<ArrowRightIcon className="w-4 h-4" />}
               >
                 ดำเนินการสั่งซื้อ
-              </button>
-              
+              </Button>
+
               <div className="mt-4 text-center">
-                <Link 
+                <Link
                   href="/"
-                  className="text-art-600 hover:text-art-700 font-medium transition-colors"
+                  className="text-sm text-art-600 hover:text-art-700 font-medium transition-colors"
                 >
                   เลือกคอร์สเพิ่มเติม
                 </Link>
@@ -275,14 +232,25 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-12 p-6 bg-blue-50 rounded-xl border border-blue-200">
-          <h4 className="font-semibold text-blue-900 mb-3">📋 ขั้นตอนถัดไป</h4>
-          <div className="text-blue-800 space-y-2 text-sm">
-            <p>1. กรอกข้อมูลผู้ปกครองและนักเรียน</p>
-            <p>2. ส่งคำขอลงทะเบียน</p>
-            <p>3. ทางทีมงานจะติดต่อกลับเพื่อยืนยันรายละเอียด</p>
-            <p>4. ชำระเงินและเริ่มเรียนได้เลย!</p>
+        {/* Next steps */}
+        <div className="mt-10 p-5 sm:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="text-lg">📋</span> ขั้นตอนถัดไป
+          </h4>
+          <div className="grid sm:grid-cols-2 gap-3 text-sm text-gray-600">
+            {[
+              'กรอกข้อมูลผู้ปกครองและนักเรียน',
+              'อัปโหลดสลิปการโอนเงิน',
+              'ทีมงานติดต่อกลับเพื่อยืนยัน',
+              'เริ่มเรียนได้เลย',
+            ].map((step, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-art-50 text-art-600 text-xs font-semibold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <span>{step}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

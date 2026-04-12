@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Kanit } from 'next/font/google';
+import { Noto_Sans_Thai } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
+import { ToastProvider } from '@/components/ui';
 
-const kanit = Kanit({ 
+const notoSansThai = Noto_Sans_Thai({
   subsets: ['latin', 'thai'],
   weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
+  variable: '--font-noto-thai',
 });
 
 export const metadata: Metadata = {
@@ -39,21 +41,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={cn(kanit.className, 'scroll-smooth')}>
+    <html lang="th" className={cn(notoSansThai.variable, 'scroll-smooth')}>
       <head>
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <meta name="format-detection" content="telephone=no" />
       </head>
-      <body className={cn(
-        'min-h-screen bg-gradient-to-br from-white via-art-50/30 to-white antialiased',
-        'text-gray-900 font-thai'
-      )}>
-        <div className="relative flex min-h-screen flex-col">
-          <main className="flex-1">
-            {children}
-          </main>
-        </div>
+      <body className="min-h-screen bg-white text-gray-900 antialiased">
+        <ToastProvider>
+          <div className="relative flex min-h-screen flex-col">
+            <main className="flex-1">{children}</main>
+          </div>
+        </ToastProvider>
       </body>
     </html>
   );

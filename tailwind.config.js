@@ -36,7 +36,7 @@ module.exports = {
         }
       },
       fontFamily: {
-        'thai': ['Kanit', 'sans-serif'],
+        'thai': ['var(--font-noto-thai)', 'Noto Sans Thai', 'sans-serif'],
       },
       animation: {
         'bounce-slow': 'bounce 2s infinite',

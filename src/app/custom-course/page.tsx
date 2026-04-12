@@ -77,7 +77,7 @@ export default function CustomCoursePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+      <div className="min-h-screen bg-white">
         <div className="max-w-3xl mx-auto px-6 py-24">
           <div className="space-y-4 animate-pulse">
             {[...Array(5)].map((_, i) => (
@@ -91,7 +91,7 @@ export default function CustomCoursePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 mb-4">{error}</p>
           <button onClick={() => window.location.reload()} className="text-white px-6 py-2 rounded-full text-sm font-medium" style={{ backgroundColor: ORANGE }}>
@@ -103,7 +103,7 @@ export default function CustomCoursePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}>
+    <div className="min-h-screen bg-white">
 
       {/* Nav */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">

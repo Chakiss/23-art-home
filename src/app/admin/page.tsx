@@ -234,7 +234,7 @@ export default function AdminPage() {
   return (
     <div
       className="min-h-screen bg-[#f5f5f7]"
-      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif' }}
+
     >
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
